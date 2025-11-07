@@ -76,7 +76,7 @@ interface ScorePopup {
   color: string;
 }
 
-// Jelly Button Component with animation
+// Jelly Button Component with reduced animation
 const JellyButton = ({ 
   onPress, 
   disabled, 
@@ -103,25 +103,25 @@ const JellyButton = ({
   }));
 
   const handlePressIn = () => {
-    // Squish effect - compress vertically and expand horizontally
-    scale.value = withSpring(0.95, { damping: 8, stiffness: 300 });
-    scaleX.value = withSpring(1.05, { damping: 8, stiffness: 300 });
-    scaleY.value = withSpring(0.9, { damping: 8, stiffness: 300 });
+    // Reduced squish effect - less compression
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 400 });
+    scaleX.value = withSpring(1.02, { damping: 15, stiffness: 400 });
+    scaleY.value = withSpring(0.96, { damping: 15, stiffness: 400 });
   };
 
   const handlePressOut = () => {
-    // Jelly bounce back with overshoot
+    // Subtle bounce back with minimal overshoot
     scale.value = withSequence(
-      withSpring(1.1, { damping: 6, stiffness: 200 }),
-      withSpring(1, { damping: 8, stiffness: 300 })
+      withSpring(1.03, { damping: 12, stiffness: 350 }),
+      withSpring(1, { damping: 15, stiffness: 400 })
     );
     scaleX.value = withSequence(
-      withSpring(0.95, { damping: 6, stiffness: 200 }),
-      withSpring(1, { damping: 8, stiffness: 300 })
+      withSpring(0.98, { damping: 12, stiffness: 350 }),
+      withSpring(1, { damping: 15, stiffness: 400 })
     );
     scaleY.value = withSequence(
-      withSpring(1.1, { damping: 6, stiffness: 200 }),
-      withSpring(1, { damping: 8, stiffness: 300 })
+      withSpring(1.03, { damping: 12, stiffness: 350 }),
+      withSpring(1, { damping: 15, stiffness: 400 })
     );
   };
 
