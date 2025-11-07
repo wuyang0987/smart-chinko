@@ -24,13 +24,16 @@ const COIN_SIZE = 35;
 const PUSHER_HEIGHT = 50;
 const PUSHER_WIDTH = SCREEN_WIDTH * 0.85;
 const DROP_ZONE_HEIGHT = 140;
-const TAB_BAR_HEIGHT = 90; // Height reserved for the floating tab bar at bottom
-const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TAB_BAR_HEIGHT - 100;
+const TAB_BAR_HEIGHT = 90; // Height of the floating tab bar at bottom
+const TAB_BAR_MARGIN = 20; // Bottom margin of the tab bar
+// Extend play area to reach the tab bar - coins will land on top of it
+const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TAB_BAR_MARGIN - 60;
 const GRAVITY = 0.6;
 const FRICTION = 0.985;
 const BOUNCE_DAMPING = 0.6;
 const PUSHER_SPEED = 2500;
-const COLLECTION_ZONE_Y = PLAY_AREA_HEIGHT + 20;
+// Collection happens when coins reach the tab bar level
+const COLLECTION_ZONE_Y = PLAY_AREA_HEIGHT - 30;
 
 interface Coin {
   id: string;
@@ -76,7 +79,7 @@ export default function CoinPusher() {
       setCoins((prevCoins) => {
         if (prevCoins.length === 0) return prevCoins;
 
-        const pusherY = PLAY_AREA_HEIGHT - PUSHER_HEIGHT - 10;
+        const pusherY = PLAY_AREA_HEIGHT - PUSHER_HEIGHT - 80;
         const pusherExtension = (pusherProgress.value * 60);
         const activePusherY = pusherY + pusherExtension;
 
@@ -122,9 +125,10 @@ export default function CoinPusher() {
             }
           }
 
-          // Ground collision
-          if (newY >= PLAY_AREA_HEIGHT - COIN_SIZE / 2 && !onPusher) {
-            newY = PLAY_AREA_HEIGHT - COIN_SIZE / 2;
+          // Ground collision - stop at the tab bar level
+          const groundLevel = PLAY_AREA_HEIGHT - COIN_SIZE / 2 - 10;
+          if (newY >= groundLevel && !onPusher) {
+            newY = groundLevel;
             newVelocityY = -newVelocityY * BOUNCE_DAMPING;
             
             if (Math.abs(newVelocityY) < 0.5) {
@@ -132,7 +136,7 @@ export default function CoinPusher() {
             }
           }
 
-          // Check if coin reached collection zone
+          // Check if coin reached collection zone (on the tab bar)
           if (newY > COLLECTION_ZONE_Y) {
             return { ...coin, collected: true };
           }
@@ -272,7 +276,7 @@ export default function CoinPusher() {
         <Text style={styles.dropHint}>Tap to drop a coin!</Text>
       </View>
 
-      {/* Play Area */}
+      {/* Play Area - Extended to reach the tab bar */}
       <View style={styles.playArea}>
         {/* Side walls indicators */}
         <View style={styles.leftWall} />
@@ -314,15 +318,19 @@ export default function CoinPusher() {
           </View>
         </Animated.View>
 
-        {/* Ground line */}
+        {/* Ground line at the bottom */}
         <View style={styles.ground} />
+        
+        {/* Visual indicator showing where coins land */}
+        <View style={styles.landingZone}>
+          <Text style={styles.landingText}>⬇️ Coins land on tab bar ⬇️</Text>
+        </View>
       </View>
 
-      {/* Collection Zone - This is where coins drop and the tab bar should be */}
-      <View style={styles.collectionZone}>
-        <Text style={styles.collectionText}>💎 Tab Bar Below 💎</Text>
-        <Text style={styles.collectionSubtext}>Coins land on the floating tab bar!</Text>
-      </View>
+      {/* Reset button */}
+      <Pressable style={styles.resetButton} onPress={resetGame}>
+        <Text style={styles.resetButtonText}>🔄 RESET GAME</Text>
+      </Pressable>
     </View>
   );
 }
@@ -401,7 +409,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderRightWidth: 4,
     borderColor: colors.accent,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   leftWall: {
     position: 'absolute',
@@ -425,6 +433,7 @@ const styles = StyleSheet.create({
     height: COIN_SIZE,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 50,
   },
   coinInner: {
     width: '100%',
@@ -442,12 +451,13 @@ const styles = StyleSheet.create({
   },
   pusher: {
     position: 'absolute',
-    bottom: 10,
+    bottom: 90,
     left: (SCREEN_WIDTH - PUSHER_WIDTH) / 2,
     width: PUSHER_WIDTH,
     height: PUSHER_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 40,
   },
   pusherBar: {
     width: '100%',
@@ -471,32 +481,48 @@ const styles = StyleSheet.create({
   },
   ground: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 10,
     left: 0,
     right: 0,
     height: 3,
     backgroundColor: colors.primary,
+    zIndex: 30,
   },
-  collectionZone: {
-    height: 60,
-    backgroundColor: colors.highlight,
+  landingZone: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopWidth: 4,
-    borderBottomWidth: 4,
-    borderColor: colors.primary,
-    boxShadow: '0px -2px 6px rgba(0, 0, 0, 0.15)',
-    elevation: 3,
+    borderTopWidth: 2,
+    borderTopColor: colors.highlight,
+    zIndex: 20,
   },
-  collectionText: {
-    fontSize: 16,
+  landingText: {
+    fontSize: 12,
     fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 2,
+    color: colors.primary,
   },
-  collectionSubtext: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
+  resetButton: {
+    position: 'absolute',
+    top: 60,
+    right: 10,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+    elevation: 3,
+    zIndex: 200,
+  },
+  resetButtonText: {
+    color: colors.card,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

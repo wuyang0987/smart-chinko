@@ -144,13 +144,15 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     zIndex: 100,
+    pointerEvents: 'box-none',
   },
   container: {
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.08)',
-    elevation: 3,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+    elevation: 8,
+    pointerEvents: 'auto',
   },
   tab: {
     flex: 1,
