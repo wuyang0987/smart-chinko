@@ -10,9 +10,15 @@ export default function TabLayout() {
   const tabs: TabBarItem[] = [
     {
       name: '(home)',
-      title: 'Game',
-      icon: 'gamecontroller.fill',
+      title: 'Coin Pusher',
+      icon: 'dollarsign.circle.fill',
       route: '/(tabs)/(home)',
+    },
+    {
+      name: '(pachinko)',
+      title: 'Pachinko',
+      icon: 'circle.circle.fill',
+      route: '/(tabs)/(pachinko)',
     },
     {
       name: 'profile',
@@ -29,9 +35,17 @@ export default function TabLayout() {
           <NativeTabs.Screen
             name="(home)"
             options={{
-              title: 'Game',
-              tabBarIcon: ({ color }) => <Icon name="gamecontroller.fill" color={color} />,
-              tabBarLabel: ({ color }) => <Label color={color}>Game</Label>,
+              title: 'Coin Pusher',
+              tabBarIcon: ({ color }) => <Icon name="dollarsign.circle.fill" color={color} />,
+              tabBarLabel: ({ color }) => <Label color={color}>Coin Pusher</Label>,
+            }}
+          />
+          <NativeTabs.Screen
+            name="(pachinko)"
+            options={{
+              title: 'Pachinko',
+              tabBarIcon: ({ color }) => <Icon name="circle.circle.fill" color={color} />,
+              tabBarLabel: ({ color }) => <Label color={color}>Pachinko</Label>,
             }}
           />
           <NativeTabs.Screen
@@ -51,6 +65,7 @@ export default function TabLayout() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(home)" />
+        <Stack.Screen name="(pachinko)" />
         <Stack.Screen name="profile" />
       </Stack>
       <FloatingTabBar tabs={tabs} />
