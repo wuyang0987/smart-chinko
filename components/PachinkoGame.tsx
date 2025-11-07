@@ -1118,7 +1118,7 @@ const styles = StyleSheet.create({
   },
   bottomHintContainer: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 90,
     left: 0,
     right: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
