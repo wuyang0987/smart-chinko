@@ -24,7 +24,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BALL_SIZE = 22;
 const PEG_SIZE = 14;
 const DROP_ZONE_HEIGHT = 140;
-const TAB_BAR_SPACE = 110; // Space reserved for the floating tab bar at the bottom
+const TAB_BAR_SPACE = 130; // Increased from 110 to 130 to prevent overlap
 const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TAB_BAR_SPACE - 60;
 const GRAVITY = 0.6;
 const FRICTION = 0.985;
@@ -549,11 +549,6 @@ export default function PachinkoGame() {
         </View>
       </View>
 
-      {/* Reset button - repositioned below header */}
-      <Pressable style={styles.resetButton} onPress={resetGame}>
-        <Text style={styles.resetButtonText}>🔄 RESET</Text>
-      </Pressable>
-
       {/* Combo Display */}
       {combo > 1 && (
         <Animated.View style={[styles.comboContainer, animatedComboStyle]}>
@@ -587,8 +582,12 @@ export default function PachinkoGame() {
             disabled={ballCount <= 0}
           >
             <Text style={styles.autoDropButtonText}>
-              {autoDrop ? '⏸️ PAUSE' : '▶️ AUTO'}
+              {autoDrop ? '⏸️ AUTO' : '▶️ AUTO'}
             </Text>
+          </Pressable>
+
+          <Pressable style={styles.resetButton} onPress={resetGame}>
+            <Text style={styles.resetButtonText}>🔄 RESET</Text>
           </Pressable>
         </View>
         
@@ -751,28 +750,9 @@ const styles = StyleSheet.create({
   lowBalls: {
     color: '#FF6B6B',
   },
-  resetButton: {
-    position: 'absolute',
-    top: 95,
-    right: 10,
-    backgroundColor: '#FF5252',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
-    elevation: 5,
-    zIndex: 200,
-  },
-  resetButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
   comboContainer: {
     position: 'absolute',
-    top: 130,
+    top: 95,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -798,13 +778,13 @@ const styles = StyleSheet.create({
   },
   dropButtons: {
     flexDirection: 'row',
-    gap: 15,
+    gap: 10,
     marginBottom: 10,
   },
   dropButton: {
     backgroundColor: '#4CAF50',
-    paddingHorizontal: 35,
-    paddingVertical: 16,
+    paddingHorizontal: 25,
+    paddingVertical: 14,
     borderRadius: 25,
     boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.4)',
     elevation: 8,
@@ -813,8 +793,8 @@ const styles = StyleSheet.create({
   },
   autoDropButton: {
     backgroundColor: '#2196F3',
-    paddingHorizontal: 35,
-    paddingVertical: 16,
+    paddingHorizontal: 25,
+    paddingVertical: 14,
     borderRadius: 25,
     boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.4)',
     elevation: 8,
@@ -824,19 +804,35 @@ const styles = StyleSheet.create({
   autoDropButtonActive: {
     backgroundColor: '#FF9800',
   },
+  resetButton: {
+    backgroundColor: '#FF5252',
+    paddingHorizontal: 25,
+    paddingVertical: 14,
+    borderRadius: 25,
+    boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.4)',
+    elevation: 8,
+    borderWidth: 3,
+    borderColor: '#FFD700',
+  },
   dropButtonDisabled: {
     backgroundColor: '#666666',
     opacity: 0.5,
   },
   dropButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 1,
   },
   autoDropButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  resetButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 1,
   },
