@@ -25,9 +25,8 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BALL_SIZE = 22;
 const PEG_SIZE = 14;
 const DROP_ZONE_HEIGHT = 140;
-const TAB_BAR_HEIGHT = 90;
-const TAB_BAR_MARGIN = 20;
-const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TAB_BAR_MARGIN - 60;
+const TAB_BAR_SPACE = 110; // Space reserved for the floating tab bar at the bottom
+const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TAB_BAR_SPACE - 60;
 const GRAVITY = 0.6;
 const FRICTION = 0.985;
 const BOUNCE_DAMPING = 0.75;
@@ -816,6 +815,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 4,
     borderColor: '#FFD700',
     overflow: 'visible',
+    marginBottom: TAB_BAR_SPACE,
   },
   peg: {
     position: 'absolute',
