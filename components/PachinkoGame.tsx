@@ -76,7 +76,7 @@ interface ScorePopup {
   color: string;
 }
 
-// Generate pegs in an improved pattern with fewer pegs
+// Generate pegs in an improved pattern with fewer pegs and randomization
 const generatePegs = (): Peg[] => {
   const pegs: Peg[] = [];
   const rows = 8; // Reduced from 14 to 8
@@ -91,9 +91,13 @@ const generatePegs = (): Peg[] => {
 
     for (let col = 0; col < pegsInRow; col++) {
       const offsetX = (row % 2) * (pegSpacing / 2);
+      // Add random offset to each peg position for variety
+      const randomOffsetX = (Math.random() - 0.5) * 15;
+      const randomOffsetY = (Math.random() - 0.5) * 10;
+      
       pegs.push({
-        x: startX + col * pegSpacing + offsetX,
-        y: startY + row * rowSpacing,
+        x: startX + col * pegSpacing + offsetX + randomOffsetX,
+        y: startY + row * rowSpacing + randomOffsetY,
         hit: false,
         hitTime: 0,
       });
@@ -490,6 +494,7 @@ export default function PachinkoGame() {
   }, [ballCount]);
 
   const resetGame = () => {
+    console.log('Resetting game - repositioning pegs...');
     setBalls([]);
     setScore(0);
     setBallCount(30);
@@ -497,7 +502,11 @@ export default function PachinkoGame() {
     setParticles([]);
     setScorePopups([]);
     setAutoDrop(false);
-    setPegs(generatePegs());
+    
+    // Generate new pegs with randomized positions
+    const newPegs = generatePegs();
+    console.log(`Generated ${newPegs.length} new pegs with randomized positions`);
+    setPegs(newPegs);
 
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
