@@ -549,6 +549,11 @@ export default function PachinkoGame() {
         </View>
       </View>
 
+      {/* Reset button - repositioned below header */}
+      <Pressable style={styles.resetButton} onPress={resetGame}>
+        <Text style={styles.resetButtonText}>🔄 RESET</Text>
+      </Pressable>
+
       {/* Combo Display */}
       {combo > 1 && (
         <Animated.View style={[styles.comboContainer, animatedComboStyle]}>
@@ -698,11 +703,6 @@ export default function PachinkoGame() {
           ))}
         </View>
       </View>
-
-      {/* Reset button */}
-      <Pressable style={styles.resetButton} onPress={resetGame}>
-        <Text style={styles.resetButtonText}>🔄 RESET</Text>
-      </Pressable>
     </View>
   );
 }
@@ -751,9 +751,28 @@ const styles = StyleSheet.create({
   lowBalls: {
     color: '#FF6B6B',
   },
+  resetButton: {
+    position: 'absolute',
+    top: 95,
+    right: 10,
+    backgroundColor: '#FF5252',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
+    elevation: 5,
+    zIndex: 200,
+  },
+  resetButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
   comboContainer: {
     position: 'absolute',
-    top: 80,
+    top: 130,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -938,24 +957,5 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
-  },
-  resetButton: {
-    position: 'absolute',
-    top: 60,
-    right: 10,
-    backgroundColor: '#FF5252',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
-    elevation: 5,
-    zIndex: 200,
-  },
-  resetButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
   },
 });
