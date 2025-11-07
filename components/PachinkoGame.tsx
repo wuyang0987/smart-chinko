@@ -25,8 +25,9 @@ const BALL_SIZE = 22;
 const PEG_SIZE = 14;
 const PEG_RADIUS = PEG_SIZE / 2;
 const DROP_ZONE_HEIGHT = 140;
-const TAB_BAR_SPACE = 160; // Increased from 130 to 160 to prevent overlap with bottom menu
-const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TAB_BAR_SPACE - 60;
+const TAB_BAR_SPACE = 160;
+const TOP_SPACE = 60; // Added extra space at the top
+const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TAB_BAR_SPACE - TOP_SPACE;
 const GRAVITY = 0.6;
 const FRICTION = 0.985;
 const BOUNCE_DAMPING = 0.75;
@@ -574,6 +575,9 @@ export default function PachinkoGame() {
         />
       </View>
 
+      {/* Top Spacer for breathing room */}
+      <View style={styles.topSpacer} />
+
       {/* Header Stats */}
       <View style={styles.header}>
         <View style={styles.statBox}>
@@ -765,6 +769,11 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
   },
+  topSpacer: {
+    height: TOP_SPACE,
+    backgroundColor: 'transparent',
+    zIndex: 1,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -802,7 +811,7 @@ const styles = StyleSheet.create({
   },
   comboContainer: {
     position: 'absolute',
-    top: 95,
+    top: TOP_SPACE + 95,
     left: 0,
     right: 0,
     alignItems: 'center',
