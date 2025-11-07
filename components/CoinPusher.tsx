@@ -6,18 +6,30 @@ import {
   StyleSheet,
   Dimensions,
   Pressable,
-  Animated,
   Platform,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/styles/commonStyles';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const COIN_SIZE = 40;
-const PUSHER_HEIGHT = 60;
-const PUSHER_WIDTH = SCREEN_WIDTH * 0.8;
-const DROP_ZONE_HEIGHT = 150;
-const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - 200;
+const COIN_SIZE = 35;
+const PUSHER_HEIGHT = 50;
+const PUSHER_WIDTH = SCREEN_WIDTH * 0.85;
+const DROP_ZONE_HEIGHT = 140;
+const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - 250;
+const GRAVITY = 0.6;
+const FRICTION = 0.985;
+const BOUNCE_DAMPING = 0.6;
+const PUSHER_SPEED = 2500;
+const COLLECTION_ZONE_Y = PLAY_AREA_HEIGHT + 20;
 
 interface Coin {
   id: string;
@@ -27,81 +39,124 @@ interface Coin {
   velocityY: number;
   rotation: number;
   collected: boolean;
+  onPusher: boolean;
 }
 
 export default function CoinPusher() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [score, setScore] = useState(0);
-  const [coinCount, setCoinCount] = useState(10);
-  const pusherPosition = useRef(new Animated.Value(0)).current;
-  const [isPushing, setIsPushing] = useState(false);
+  const [coinCount, setCoinCount] = useState(15);
+  const [highScore, setHighScore] = useState(0);
+  const pusherProgress = useSharedValue(0);
+  const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Pusher animation
+  // Pusher animation - moves back and forth
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pusherPosition, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pusherPosition, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
+    pusherProgress.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: PUSHER_SPEED, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: PUSHER_SPEED, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      false
     );
-    animation.start();
-    return () => animation.stop();
   }, []);
 
-  // Physics simulation
+  const pusherAnimatedStyle = useAnimatedStyle(() => {
+    const translateY = pusherProgress.value * 60;
+    return {
+      transform: [{ translateY }],
+    };
+  });
+
+  // Main physics simulation loop
   useEffect(() => {
-    const interval = setInterval(() => {
+    gameLoopRef.current = setInterval(() => {
       setCoins((prevCoins) => {
+        if (prevCoins.length === 0) return prevCoins;
+
+        const pusherY = PLAY_AREA_HEIGHT - PUSHER_HEIGHT - 10;
+        const pusherExtension = (pusherProgress.value * 60);
+        const activePusherY = pusherY + pusherExtension;
+
         const updatedCoins = prevCoins.map((coin) => {
           if (coin.collected) return coin;
 
-          let newY = coin.y + coin.velocityY;
-          let newX = coin.x + coin.velocityX;
-          let newVelocityY = coin.velocityY + 0.5; // Gravity
-          let newVelocityX = coin.velocityX * 0.98; // Friction
-          let newRotation = coin.rotation + 5;
+          // Apply gravity
+          let newVelocityY = coin.velocityY + GRAVITY;
+          let newVelocityX = coin.velocityX * FRICTION;
+          let newY = coin.y + newVelocityY;
+          let newX = coin.x + newVelocityX;
+          let newRotation = coin.rotation + (newVelocityX * 2);
+          let onPusher = false;
 
-          // Bounce off walls
+          // Wall collision detection
           if (newX < COIN_SIZE / 2) {
             newX = COIN_SIZE / 2;
-            newVelocityX = -newVelocityX * 0.7;
-          }
-          if (newX > SCREEN_WIDTH - COIN_SIZE / 2) {
+            newVelocityX = -newVelocityX * BOUNCE_DAMPING;
+          } else if (newX > SCREEN_WIDTH - COIN_SIZE / 2) {
             newX = SCREEN_WIDTH - COIN_SIZE / 2;
-            newVelocityX = -newVelocityX * 0.7;
+            newVelocityX = -newVelocityX * BOUNCE_DAMPING;
           }
 
-          // Check if coin reached the pusher level
-          const pusherY = DROP_ZONE_HEIGHT + PLAY_AREA_HEIGHT - PUSHER_HEIGHT;
-          if (newY >= pusherY && newY < pusherY + PUSHER_HEIGHT) {
-            // Coin is at pusher level - push it forward
-            if (isPushing) {
-              newVelocityY = 2;
-              newVelocityX += (Math.random() - 0.5) * 2;
-            } else {
-              newY = pusherY;
+          // Pusher collision detection
+          const coinBottom = newY + COIN_SIZE / 2;
+          const coinTop = newY - COIN_SIZE / 2;
+          
+          if (coinBottom >= activePusherY && coinTop <= activePusherY + PUSHER_HEIGHT) {
+            const pusherLeft = (SCREEN_WIDTH - PUSHER_WIDTH) / 2;
+            const pusherRight = pusherLeft + PUSHER_WIDTH;
+            
+            if (newX >= pusherLeft && newX <= pusherRight) {
+              // Coin is on the pusher
+              onPusher = true;
+              newY = activePusherY - COIN_SIZE / 2;
+              newVelocityY = Math.max(newVelocityY, 1);
+              
+              // Push the coin forward
+              if (pusherProgress.value > 0.3 && pusherProgress.value < 0.7) {
+                newVelocityY += 2;
+                newVelocityX += (Math.random() - 0.5) * 1.5;
+              }
+            }
+          }
+
+          // Ground collision
+          if (newY >= PLAY_AREA_HEIGHT - COIN_SIZE / 2 && !onPusher) {
+            newY = PLAY_AREA_HEIGHT - COIN_SIZE / 2;
+            newVelocityY = -newVelocityY * BOUNCE_DAMPING;
+            
+            if (Math.abs(newVelocityY) < 0.5) {
               newVelocityY = 0;
             }
           }
 
-          // Check if coin fell off the edge (collected)
-          if (newY > SCREEN_HEIGHT - 100) {
+          // Check if coin reached collection zone
+          if (newY > COLLECTION_ZONE_Y) {
             return { ...coin, collected: true };
           }
 
-          // Stop at bottom if not collected
-          if (newY > SCREEN_HEIGHT - 150) {
-            newY = SCREEN_HEIGHT - 150;
-            newVelocityY = 0;
-          }
+          // Coin-to-coin collision (simplified)
+          prevCoins.forEach((otherCoin) => {
+            if (otherCoin.id !== coin.id && !otherCoin.collected) {
+              const dx = newX - otherCoin.x;
+              const dy = newY - otherCoin.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              
+              if (distance < COIN_SIZE) {
+                const angle = Math.atan2(dy, dx);
+                const targetX = otherCoin.x + Math.cos(angle) * COIN_SIZE;
+                const targetY = otherCoin.y + Math.sin(angle) * COIN_SIZE;
+                
+                newX = targetX;
+                newY = targetY;
+                
+                const bounce = 0.5;
+                newVelocityX += Math.cos(angle) * bounce;
+                newVelocityY += Math.sin(angle) * bounce;
+              }
+            }
+          });
 
           return {
             ...coin,
@@ -110,34 +165,38 @@ export default function CoinPusher() {
             velocityX: newVelocityX,
             velocityY: newVelocityY,
             rotation: newRotation,
+            onPusher,
+            collected: false,
           };
         });
 
-        // Count collected coins
+        // Handle collected coins
         const newlyCollected = updatedCoins.filter(
           (coin, index) => coin.collected && !prevCoins[index].collected
         );
+        
         if (newlyCollected.length > 0) {
-          setScore((prev) => prev + newlyCollected.length);
+          const points = newlyCollected.length * 10;
+          setScore((prev) => {
+            const newScore = prev + points;
+            setHighScore((hs) => Math.max(hs, newScore));
+            return newScore;
+          });
+          
           if (Platform.OS !== 'web') {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
         }
 
-        // Remove collected coins after a delay
         return updatedCoins.filter((coin) => !coin.collected);
       });
-    }, 16); // ~60fps
+    }, 1000 / 60); // 60 FPS
 
-    return () => clearInterval(interval);
-  }, [isPushing]);
-
-  // Pusher push effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsPushing((prev) => !prev);
-    }, 2000);
-    return () => clearInterval(interval);
+    return () => {
+      if (gameLoopRef.current) {
+        clearInterval(gameLoopRef.current);
+      }
+    };
   }, []);
 
   const dropCoin = () => {
@@ -146,14 +205,17 @@ export default function CoinPusher() {
       return;
     }
 
+    const dropX = SCREEN_WIDTH / 2 + (Math.random() - 0.5) * 80;
+    
     const newCoin: Coin = {
-      id: Date.now().toString() + Math.random(),
-      x: SCREEN_WIDTH / 2 + (Math.random() - 0.5) * 100,
-      y: DROP_ZONE_HEIGHT,
-      velocityX: (Math.random() - 0.5) * 3,
-      velocityY: 2,
-      rotation: 0,
+      id: `${Date.now()}-${Math.random()}`,
+      x: dropX,
+      y: 0,
+      velocityX: (Math.random() - 0.5) * 2,
+      velocityY: 1,
+      rotation: Math.random() * 360,
       collected: false,
+      onPusher: false,
     };
 
     setCoins((prev) => [...prev, newCoin]);
@@ -167,85 +229,107 @@ export default function CoinPusher() {
   const resetGame = () => {
     setCoins([]);
     setScore(0);
-    setCoinCount(10);
+    setCoinCount(15);
+    
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   };
 
-  const pusherTranslateY = pusherPosition.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 50],
-  });
-
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Header Stats */}
       <View style={styles.header}>
-        <View style={styles.scoreContainer}>
-          <Text style={styles.scoreLabel}>Score</Text>
-          <Text style={styles.scoreValue}>{score}</Text>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>Score</Text>
+          <Text style={styles.statValue}>{score}</Text>
         </View>
-        <View style={styles.coinCountContainer}>
-          <Text style={styles.coinCountLabel}>Coins Left</Text>
-          <Text style={styles.coinCountValue}>{coinCount}</Text>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>High Score</Text>
+          <Text style={styles.statValue}>{highScore}</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>Coins</Text>
+          <Text style={styles.statValue}>{coinCount}</Text>
         </View>
       </View>
 
       {/* Drop Zone */}
       <View style={styles.dropZone}>
         <Pressable
-          style={styles.dropButton}
+          style={[
+            styles.dropButton,
+            coinCount <= 0 && styles.dropButtonDisabled
+          ]}
           onPress={dropCoin}
           disabled={coinCount <= 0}
         >
           <Text style={styles.dropButtonText}>
-            {coinCount > 0 ? 'DROP COIN' : 'NO COINS'}
+            {coinCount > 0 ? '💰 DROP COIN' : '❌ NO COINS'}
           </Text>
         </Pressable>
+        <Text style={styles.dropHint}>Tap to drop a coin!</Text>
       </View>
 
       {/* Play Area */}
       <View style={styles.playArea}>
+        {/* Side walls indicators */}
+        <View style={styles.leftWall} />
+        <View style={styles.rightWall} />
+
         {/* Coins */}
         {coins.map((coin) => (
-          <View
+          <Animated.View
             key={coin.id}
             style={[
               styles.coin,
               {
                 left: coin.x - COIN_SIZE / 2,
-                top: coin.y - DROP_ZONE_HEIGHT - COIN_SIZE / 2,
+                top: coin.y - COIN_SIZE / 2,
                 transform: [{ rotate: `${coin.rotation}deg` }],
               },
             ]}
           >
-            <Text style={styles.coinText}>🪙</Text>
-          </View>
+            <View style={[
+              styles.coinInner,
+              coin.onPusher && styles.coinOnPusher
+            ]}>
+              <Text style={styles.coinText}>🪙</Text>
+            </View>
+          </Animated.View>
         ))}
 
-        {/* Pusher */}
+        {/* Pusher Mechanism */}
         <Animated.View
           style={[
             styles.pusher,
-            {
-              transform: [{ translateY: pusherTranslateY }],
-            },
+            pusherAnimatedStyle,
           ]}
         >
-          <View style={styles.pusherBar} />
+          <View style={styles.pusherBar}>
+            <View style={styles.pusherGrip} />
+            <View style={styles.pusherGrip} />
+            <View style={styles.pusherGrip} />
+          </View>
         </Animated.View>
+
+        {/* Ground line */}
+        <View style={styles.ground} />
       </View>
 
-      {/* Collection Area */}
-      <View style={styles.collectionArea}>
-        <Text style={styles.collectionText}>Collection Zone</Text>
+      {/* Collection Zone */}
+      <View style={styles.collectionZone}>
+        <Text style={styles.collectionText}>💎 Collection Zone 💎</Text>
+        <Text style={styles.collectionSubtext}>Coins that fall here count!</Text>
       </View>
 
-      {/* Reset Button */}
-      <View style={styles.footer}>
-        <Pressable style={styles.resetButton} onPress={resetGame}>
-          <Text style={styles.resetButtonText}>RESET GAME</Text>
+      {/* Controls */}
+      <View style={styles.controls}>
+        <Pressable 
+          style={styles.resetButton} 
+          onPress={resetGame}
+        >
+          <Text style={styles.resetButtonText}>🔄 RESET GAME</Text>
         </Pressable>
       </View>
     </View>
@@ -260,67 +344,89 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
     backgroundColor: colors.card,
-    borderBottomWidth: 2,
+    borderBottomWidth: 3,
     borderBottomColor: colors.primary,
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-    elevation: 3,
+    boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.15)',
+    elevation: 4,
   },
-  scoreContainer: {
+  statBox: {
     alignItems: 'center',
+    minWidth: 80,
   },
-  scoreLabel: {
-    fontSize: 14,
+  statLabel: {
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '600',
+    textTransform: 'uppercase',
   },
-  scoreValue: {
-    fontSize: 32,
+  statValue: {
+    fontSize: 28,
     color: colors.primary,
     fontWeight: 'bold',
-  },
-  coinCountContainer: {
-    alignItems: 'center',
-  },
-  coinCountLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  coinCountValue: {
-    fontSize: 32,
-    color: colors.secondary,
-    fontWeight: 'bold',
+    marginTop: 2,
   },
   dropZone: {
     height: DROP_ZONE_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderBottomWidth: 3,
+    borderBottomWidth: 4,
     borderBottomColor: colors.accent,
+    paddingVertical: 20,
   },
   dropButton: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 40,
-    paddingVertical: 20,
-    borderRadius: 15,
-    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.2)',
-    elevation: 5,
+    paddingHorizontal: 50,
+    paddingVertical: 18,
+    borderRadius: 25,
+    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.25)',
+    elevation: 6,
+    borderWidth: 3,
+    borderColor: colors.secondary,
+  },
+  dropButtonDisabled: {
+    backgroundColor: colors.accent,
+    opacity: 0.5,
   },
   dropButtonText: {
     color: colors.card,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  dropHint: {
+    marginTop: 12,
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
   },
   playArea: {
     height: PLAY_AREA_HEIGHT,
-    backgroundColor: colors.background,
+    backgroundColor: '#E8DCC4',
     position: 'relative',
-    borderLeftWidth: 3,
-    borderRightWidth: 3,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
     borderColor: colors.accent,
+    overflow: 'hidden',
+  },
+  leftWall: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: colors.primary,
+  },
+  rightWall: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: colors.primary,
   },
   coin: {
     position: 'absolute',
@@ -329,12 +435,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  coinInner: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: COIN_SIZE / 2,
+    backgroundColor: 'transparent',
+  },
+  coinOnPusher: {
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+  },
   coinText: {
-    fontSize: 36,
+    fontSize: 32,
   },
   pusher: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 10,
     left: (SCREEN_WIDTH - PUSHER_WIDTH) / 2,
     width: PUSHER_WIDTH,
     height: PUSHER_HEIGHT,
@@ -343,28 +460,55 @@ const styles = StyleSheet.create({
   },
   pusherBar: {
     width: '100%',
-    height: '80%',
+    height: '100%',
     backgroundColor: colors.secondary,
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 3,
     borderColor: colors.primary,
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.3)',
-    elevation: 4,
+    boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.3)',
+    elevation: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  collectionArea: {
-    height: 80,
+  pusherGrip: {
+    width: 6,
+    height: '60%',
+    backgroundColor: colors.primary,
+    borderRadius: 3,
+  },
+  ground: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: colors.primary,
+  },
+  collectionZone: {
+    height: 90,
     backgroundColor: colors.highlight,
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopWidth: 3,
-    borderTopColor: colors.primary,
+    borderTopWidth: 4,
+    borderBottomWidth: 4,
+    borderColor: colors.primary,
+    boxShadow: '0px -2px 6px rgba(0, 0, 0, 0.15)',
+    elevation: 3,
   },
   collectionText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
+    marginBottom: 4,
   },
-  footer: {
+  collectionSubtext: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  controls: {
     padding: 15,
     backgroundColor: colors.card,
     borderTopWidth: 2,
@@ -372,15 +516,18 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     backgroundColor: colors.accent,
-    paddingVertical: 15,
-    borderRadius: 10,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.15)',
     elevation: 3,
+    borderWidth: 2,
+    borderColor: colors.textSecondary,
   },
   resetButtonText: {
     color: colors.card,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });
