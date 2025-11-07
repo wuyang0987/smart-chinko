@@ -46,6 +46,7 @@ interface Ball {
   scoreZone: number | null;
   type: 'normal' | 'golden' | 'rainbow';
   color: string;
+  passedScoreZone: boolean;
 }
 
 interface Peg {
@@ -313,32 +314,41 @@ export default function PachinkoGame() {
             }
           }
 
-          // Ground collision - check which score zone
-          const groundLevel = PLAY_AREA_HEIGHT - BALL_SIZE / 2 - 20;
-          if (newY >= groundLevel) {
-            newY = groundLevel;
-            newVelocityY = -newVelocityY * 0.3;
+          // Check if ball has reached the score zone area (at the bottom of play area)
+          const scoreZoneTop = PLAY_AREA_HEIGHT;
+          
+          // If ball passes through the score zone area and hasn't been scored yet
+          if (newY >= scoreZoneTop && !ball.passedScoreZone) {
+            // Determine which score zone the ball is in based on X position
+            const zoneIndex = Math.floor(newX / (SCREEN_WIDTH / scoreZones.length));
+            const zone = scoreZones[Math.min(zoneIndex, scoreZones.length - 1)];
 
-            if (Math.abs(newVelocityY) < 1) {
-              newVelocityY = 0;
-              newVelocityX *= 0.9;
+            // Calculate score multiplier based on ball type
+            const multiplier = ball.type === 'golden' ? zone.multiplier * 2 : 
+                             ball.type === 'rainbow' ? zone.multiplier * 3 : 
+                             zone.multiplier;
+            
+            // Create visual effects
+            createScorePopup(newX, scoreZoneTop, multiplier * 10, zone.color);
+            createParticles(newX, scoreZoneTop, zone.color, 15);
+            
+            console.log(`Ball scored in zone ${zoneIndex} with multiplier ${multiplier}`);
+            
+            // Mark ball as having passed through score zone
+            return { 
+              ...ball, 
+              x: newX,
+              y: newY,
+              velocityX: newVelocityX,
+              velocityY: newVelocityY,
+              scoreZone: multiplier, 
+              passedScoreZone: true 
+            };
+          }
 
-              // Determine which score zone the ball is in
-              const zoneIndex = Math.floor(newX / (SCREEN_WIDTH / scoreZones.length));
-              const zone = scoreZones[Math.min(zoneIndex, scoreZones.length - 1)];
-
-              if (Math.abs(newVelocityX) < 0.5 && !ball.scoreZone) {
-                // Ball has landed in a zone
-                const multiplier = ball.type === 'golden' ? zone.multiplier * 2 : 
-                                 ball.type === 'rainbow' ? zone.multiplier * 3 : 
-                                 zone.multiplier;
-                
-                createScorePopup(newX, newY, multiplier * 10, zone.color);
-                createParticles(newX, newY, zone.color, 15);
-                
-                return { ...ball, scoreZone: multiplier, collected: true };
-              }
-            }
+          // Remove ball if it's fallen well below the score zone
+          if (newY > PLAY_AREA_HEIGHT + SCORE_ZONE_HEIGHT + 50) {
+            return { ...ball, collected: true };
           }
 
           return {
@@ -350,13 +360,13 @@ export default function PachinkoGame() {
           };
         });
 
-        // Handle collected balls
-        const newlyCollected = updatedBalls.filter(
-          (ball, index) => ball.collected && !prevBalls[index].collected
+        // Handle newly scored balls
+        const newlyScored = updatedBalls.filter(
+          (ball, index) => ball.passedScoreZone && !prevBalls[index].passedScoreZone
         );
 
-        if (newlyCollected.length > 0) {
-          const points = newlyCollected.reduce(
+        if (newlyScored.length > 0) {
+          const points = newlyScored.reduce(
             (sum, ball) => sum + (ball.scoreZone || 0) * 10,
             0
           );
@@ -399,7 +409,7 @@ export default function PachinkoGame() {
           }, 2000);
 
           if (Platform.OS !== 'web') {
-            const maxMultiplier = Math.max(...newlyCollected.map(b => b.scoreZone || 0));
+            const maxMultiplier = Math.max(...newlyScored.map(b => b.scoreZone || 0));
             if (maxMultiplier >= 20) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } else if (maxMultiplier >= 8) {
@@ -523,6 +533,7 @@ export default function PachinkoGame() {
       scoreZone: null,
       type: ballType,
       color: ballColor,
+      passedScoreZone: false,
     };
 
     setBalls((prev) => [...prev, newBall]);
