@@ -20,14 +20,13 @@ import * as Haptics from 'expo-haptics';
 import { colors } from '@/styles/commonStyles';
 import { LinearGradient } from 'expo-linear-gradient';
 import { IconSymbol } from '@/components/IconSymbol';
-import { useRouter, usePathname } from 'expo-router';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BALL_SIZE = 22;
 const PEG_SIZE = 14;
 const PEG_RADIUS = PEG_SIZE / 2;
 const DROP_ZONE_HEIGHT = 140;
-const TOP_SPACE = 60; // Reduced back to 60 since menu is now in the button row
+const TOP_SPACE = 60;
 const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TOP_SPACE;
 const GRAVITY = 0.6;
 const FRICTION = 0.985;
@@ -184,15 +183,11 @@ export default function PachinkoGame() {
   const [autoDrop, setAutoDrop] = useState(false);
   const [combo, setCombo] = useState(0);
   const [lastScoreTime, setLastScoreTime] = useState(0);
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
   const autoDropRef = useRef<NodeJS.Timeout | null>(null);
   const comboTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pegsRef = useRef<Peg[]>(pegs);
-  
-  const router = useRouter();
-  const pathname = usePathname();
 
   // Keep pegs ref in sync
   useEffect(() => {
@@ -202,8 +197,6 @@ export default function PachinkoGame() {
   // Animated values for UI effects
   const scoreScale = useSharedValue(1);
   const comboOpacity = useSharedValue(0);
-  const menuHeight = useSharedValue(0);
-  const menuOpacity = useSharedValue(0);
 
   const createParticles = useCallback((x: number, y: number, color: string, count: number = 5) => {
     const newParticles: Particle[] = [];
@@ -564,49 +557,6 @@ export default function PachinkoGame() {
     }
   };
 
-  const toggleMenu = () => {
-    const newExpandedState = !isMenuExpanded;
-    setIsMenuExpanded(newExpandedState);
-
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-
-    if (newExpandedState) {
-      menuHeight.value = withSpring(140, {
-        damping: 15,
-        stiffness: 100,
-      });
-      menuOpacity.value = withTiming(1, { duration: 200 });
-    } else {
-      menuHeight.value = withSpring(0, {
-        damping: 15,
-        stiffness: 100,
-      });
-      menuOpacity.value = withTiming(0, { duration: 150 });
-    }
-  };
-
-  const handleMenuItemPress = (route: string) => {
-    console.log('Menu item pressed:', route);
-    router.push(route as any);
-    
-    // Close menu after navigation
-    setTimeout(() => {
-      setIsMenuExpanded(false);
-      menuHeight.value = withSpring(0);
-      menuOpacity.value = withTiming(0, { duration: 150 });
-    }, 100);
-
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-  };
-
-  const isActive = (route: string) => {
-    return pathname.startsWith(route);
-  };
-
   const animatedScoreStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scoreScale.value }],
   }));
@@ -614,26 +564,6 @@ export default function PachinkoGame() {
   const animatedComboStyle = useAnimatedStyle(() => ({
     opacity: comboOpacity.value,
   }));
-
-  const animatedMenuStyle = useAnimatedStyle(() => ({
-    height: menuHeight.value,
-    opacity: menuOpacity.value,
-  }));
-
-  const menuItems = [
-    {
-      name: '(pachinko)',
-      title: 'Pachinko',
-      icon: 'gamecontroller.fill',
-      route: '/(tabs)/(pachinko)',
-    },
-    {
-      name: 'profile',
-      title: 'Profile',
-      icon: 'person.fill',
-      route: '/(tabs)/profile',
-    },
-  ];
 
   return (
     <View style={styles.container}>
@@ -675,23 +605,9 @@ export default function PachinkoGame() {
         </Animated.View>
       )}
 
-      {/* Drop Zone with Menu and Buttons */}
+      {/* Drop Zone with Buttons */}
       <View style={styles.dropZone}>
         <View style={styles.dropButtonsRow}>
-          {/* Collapsible Menu Button */}
-          <Pressable
-            onPress={toggleMenu}
-            style={styles.menuButton}
-          >
-            <View style={styles.menuButtonInner}>
-              <IconSymbol
-                name={isMenuExpanded ? 'xmark' : 'line.3.horizontal'}
-                size={20}
-                color="#8B7500"
-              />
-            </View>
-          </Pressable>
-
           {/* Game Control Buttons */}
           <Pressable
             onPress={dropBall}
@@ -729,43 +645,6 @@ export default function PachinkoGame() {
             </Text>
           </Pressable>
         </View>
-
-        {/* Collapsible Menu Items */}
-        <Animated.View style={[styles.menuContainer, animatedMenuStyle]}>
-          <View style={styles.menuContent}>
-            {menuItems.map((item, index) => {
-              const active = isActive(item.route);
-              return (
-                <Pressable
-                  key={item.name}
-                  style={[
-                    styles.menuItem,
-                    active && styles.menuItemActive,
-                  ]}
-                  onPress={() => handleMenuItemPress(item.route)}
-                >
-                  <IconSymbol
-                    name={item.icon as any}
-                    size={20}
-                    color={active ? '#B8860B' : '#8B7500'}
-                  />
-                  <Text
-                    style={[
-                      styles.menuItemText,
-                      {
-                        color: active ? '#B8860B' : '#8B7500',
-                        fontWeight: active ? '700' : '500',
-                      },
-                    ]}
-                  >
-                    {item.title}
-                  </Text>
-                  {active && <View style={styles.activeIndicator} />}
-                </Pressable>
-              );
-            })}
-          </View>
-        </Animated.View>
         
         <View style={styles.legendContainer}>
           <View style={styles.legendItem}>
@@ -963,30 +842,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: 'center',
   },
-  menuButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
-    elevation: 6,
-  },
-  menuButtonInner: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 22,
-    backgroundColor: '#FFFACD',
-    borderWidth: 2,
-    borderColor: '#F0E68C',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   dropButton: {
     backgroundColor: '#4CAF50',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 20,
     boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
     elevation: 6,
@@ -995,8 +854,8 @@ const styles = StyleSheet.create({
   },
   autoDropButton: {
     backgroundColor: '#2196F3',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 20,
     boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
     elevation: 6,
@@ -1008,8 +867,8 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     backgroundColor: '#FF5252',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 20,
     boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
     elevation: 6,
@@ -1037,43 +896,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     letterSpacing: 0.5,
-  },
-  menuContainer: {
-    width: '90%',
-    overflow: 'hidden',
-    backgroundColor: '#FFFACD',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#F0E68C',
-    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
-    elevation: 6,
-    marginBottom: 8,
-  },
-  menuContent: {
-    padding: 8,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(240, 230, 140, 0.4)',
-    gap: 10,
-  },
-  menuItemActive: {
-    backgroundColor: 'rgba(240, 230, 140, 0.3)',
-    borderRadius: 8,
-  },
-  menuItemText: {
-    fontSize: 14,
-    flex: 1,
-  },
-  activeIndicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#B8860B',
   },
   legendContainer: {
     flexDirection: 'row',
