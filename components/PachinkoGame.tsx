@@ -15,7 +15,9 @@ import Animated, {
   withSequence,
   withTiming,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/styles/commonStyles';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -193,6 +195,11 @@ export default function PachinkoGame() {
   const comboTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pegsRef = useRef<Peg[]>(pegs);
 
+  // Draggable score grid state
+  const scrollOffset = useSharedValue(0);
+  const startOffset = useSharedValue(0);
+  const totalZoneWidth = SCREEN_WIDTH; // Width of all zones combined
+  
   // Keep pegs ref in sync
   useEffect(() => {
     pegsRef.current = pegs;
@@ -230,6 +237,16 @@ export default function PachinkoGame() {
       },
     ]);
   }, []);
+
+  // Get the current score zone based on ball position and scroll offset
+  const getScoreZoneForBall = useCallback((ballX: number) => {
+    // Adjust ball position by scroll offset to get the actual zone
+    const adjustedX = (ballX - scrollOffset.value) % totalZoneWidth;
+    const normalizedX = adjustedX < 0 ? adjustedX + totalZoneWidth : adjustedX;
+    
+    const zoneIndex = Math.floor(normalizedX / (totalZoneWidth / scoreZones.length));
+    return scoreZones[Math.min(Math.max(0, zoneIndex), scoreZones.length - 1)];
+  }, [scoreZones, totalZoneWidth]);
 
   // Main physics simulation loop
   useEffect(() => {
@@ -319,9 +336,8 @@ export default function PachinkoGame() {
           
           // If ball passes through the score zone area and hasn't been scored yet
           if (newY >= scoreZoneTop && !ball.passedScoreZone) {
-            // Determine which score zone the ball is in based on X position
-            const zoneIndex = Math.floor(newX / (SCREEN_WIDTH / scoreZones.length));
-            const zone = scoreZones[Math.min(zoneIndex, scoreZones.length - 1)];
+            // Get the zone based on ball position and current scroll offset
+            const zone = getScoreZoneForBall(newX);
 
             // Calculate score multiplier based on ball type
             const multiplier = ball.type === 'golden' ? zone.multiplier * 2 : 
@@ -332,7 +348,7 @@ export default function PachinkoGame() {
             createScorePopup(newX, scoreZoneTop, multiplier * 10, zone.color);
             createParticles(newX, scoreZoneTop, zone.color, 15);
             
-            console.log(`Ball scored in zone ${zoneIndex} with multiplier ${multiplier}`);
+            console.log(`Ball scored with multiplier ${multiplier} (zone: ${zone.label})`);
             
             // Mark ball as having passed through score zone
             return { 
@@ -475,7 +491,7 @@ export default function PachinkoGame() {
         clearInterval(gameLoopRef.current);
       }
     };
-  }, [scoreZones, lastScoreTime, createParticles, createScorePopup]);
+  }, [scoreZones, lastScoreTime, createParticles, createScorePopup, getScoreZoneForBall]);
 
   // Auto-drop functionality
   useEffect(() => {
@@ -553,6 +569,7 @@ export default function PachinkoGame() {
     setParticles([]);
     setScorePopups([]);
     setAutoDrop(false);
+    scrollOffset.value = 0;
     
     // Generate new pegs with randomized positions and staggered pattern
     const newPegs = generatePegs();
@@ -571,6 +588,31 @@ export default function PachinkoGame() {
     }
   };
 
+  // Pan gesture for dragging score zones
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      startOffset.value = scrollOffset.value;
+    })
+    .onUpdate((event) => {
+      // Update scroll offset based on drag
+      scrollOffset.value = startOffset.value + event.translationX;
+      
+      // Provide haptic feedback during drag
+      if (Platform.OS !== 'web' && Math.abs(event.translationX) % 20 < 2) {
+        runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
+      }
+    })
+    .onEnd((event) => {
+      // Add momentum to the scroll
+      const velocity = event.velocityX;
+      const momentum = velocity * 0.2;
+      scrollOffset.value = withSpring(scrollOffset.value + momentum, {
+        velocity: velocity,
+        damping: 20,
+        stiffness: 90,
+      });
+    });
+
   const animatedScoreStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scoreScale.value }],
   }));
@@ -578,6 +620,43 @@ export default function PachinkoGame() {
   const animatedComboStyle = useAnimatedStyle(() => ({
     opacity: comboOpacity.value,
   }));
+
+  // Animated style for the score zones container with looping
+  const animatedScoreZonesStyle = useAnimatedStyle(() => {
+    // Normalize the offset to create seamless looping
+    const normalizedOffset = scrollOffset.value % totalZoneWidth;
+    
+    return {
+      transform: [{ translateX: normalizedOffset }],
+    };
+  });
+
+  // Render multiple copies of score zones for seamless looping
+  const renderScoreZones = () => {
+    const copies = 3; // Render 3 copies for smooth infinite scroll
+    const zones = [];
+    
+    for (let copy = 0; copy < copies; copy++) {
+      scoreZones.forEach((zone, index) => {
+        zones.push(
+          <View
+            key={`zone-${copy}-${index}`}
+            style={[
+              styles.scoreZone,
+              {
+                width: zone.width,
+                backgroundColor: zone.color,
+              },
+            ]}
+          >
+            <Text style={styles.scoreZoneText}>{zone.label}</Text>
+          </View>
+        );
+      });
+    }
+    
+    return zones;
+  };
 
   return (
     <View style={styles.container}>
@@ -674,6 +753,8 @@ export default function PachinkoGame() {
             <Text style={styles.legendText}>Rainbow 3x</Text>
           </View>
         </View>
+        
+        <Text style={styles.dragHint}>👆 Drag the score grid below 👇</Text>
       </View>
 
       {/* Play Area */}
@@ -748,23 +829,14 @@ export default function PachinkoGame() {
         ))}
       </View>
 
-      {/* Score Zones at the bottom - now outside play area */}
-      <View style={styles.scoreZonesContainer}>
-        {scoreZones.map((zone, index) => (
-          <View
-            key={`zone-${index}`}
-            style={[
-              styles.scoreZone,
-              {
-                width: zone.width,
-                backgroundColor: zone.color,
-              },
-            ]}
-          >
-            <Text style={styles.scoreZoneText}>{zone.label}</Text>
-          </View>
-        ))}
-      </View>
+      {/* Draggable Score Zones at the bottom with looping */}
+      <GestureDetector gesture={panGesture}>
+        <View style={styles.scoreZonesWrapper}>
+          <Animated.View style={[styles.scoreZonesContainer, animatedScoreZonesStyle]}>
+            {renderScoreZones()}
+          </Animated.View>
+        </View>
+      </GestureDetector>
     </View>
   );
 }
@@ -928,6 +1000,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
+  dragHint: {
+    fontSize: 12,
+    color: '#FFD700',
+    fontWeight: '600',
+    marginTop: 8,
+    textAlign: 'center',
+  },
   playArea: {
     height: PLAY_AREA_HEIGHT,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -1002,13 +1081,18 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
   },
-  scoreZonesContainer: {
+  scoreZonesWrapper: {
     height: SCORE_ZONE_HEIGHT,
-    flexDirection: 'row',
-    zIndex: 30,
+    overflow: 'hidden',
     borderLeftWidth: 4,
     borderRightWidth: 4,
     borderColor: '#FFD700',
+    zIndex: 30,
+  },
+  scoreZonesContainer: {
+    height: '100%',
+    flexDirection: 'row',
+    position: 'absolute',
   },
   scoreZone: {
     height: '100%',
