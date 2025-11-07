@@ -2,7 +2,7 @@
 import React from "react";
 import { Stack } from "expo-router";
 import { StyleSheet, View, Platform } from "react-native";
-import CoinPusher from "@/components/CoinPusher";
+import CoinPusher3D from "@/components/CoinPusher3D";
 import { colors } from "@/styles/commonStyles";
 
 export default function HomeScreen() {
@@ -11,7 +11,7 @@ export default function HomeScreen() {
       {Platform.OS === 'ios' && (
         <Stack.Screen
           options={{
-            title: "Coin Pusher Game",
+            title: "3D Coin Pusher",
             headerStyle: {
               backgroundColor: colors.primary,
             },
@@ -24,7 +24,7 @@ export default function HomeScreen() {
         />
       )}
       <View style={styles.container}>
-        <CoinPusher />
+        <CoinPusher3D />
       </View>
     </>
   );
