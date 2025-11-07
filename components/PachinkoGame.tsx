@@ -77,12 +77,12 @@ interface ScorePopup {
   color: string;
 }
 
-// Generate 28 pegs in a proper pyramid shape
+// Generate 28 pegs with more pegs at the bottom than at the top (pyramid arrangement)
 const generatePegs = (): Peg[] => {
   const pegs: Peg[] = [];
-  const startY = 100;
-  const verticalSpacing = 85;
-  const horizontalSpacing = 65;
+  const startY = 80;
+  const rowSpacing = (PLAY_AREA_HEIGHT - 220) / 6;
+  const pegSpacing = 70;
 
   // Define boundaries with proper margins
   const minX = PEG_RADIUS + 5; // Left boundary with small margin
@@ -90,27 +90,31 @@ const generatePegs = (): Peg[] => {
   const minY = PEG_RADIUS + 5; // Top boundary with small margin
   const maxY = PLAY_AREA_HEIGHT - 100; // Bottom boundary (above score zones)
 
-  // Pyramid arrangement: 1, 2, 3, 4, 5, 6, 7 pegs per row = 28 total
-  // This creates a perfect pyramid shape with the apex at the top
-  const pegsPerRow = [1, 2, 3, 4, 5, 6, 7];
+  // Distribution: fewer pegs at top, more at bottom
+  // Row 0: 2 pegs
+  // Row 1: 3 pegs
+  // Row 2: 4 pegs
+  // Row 3: 5 pegs
+  // Row 4: 6 pegs
+  // Row 5: 8 pegs
+  // Total: 2 + 3 + 4 + 5 + 6 + 8 = 28 pegs
+  const pegsPerRow = [2, 3, 4, 5, 6, 8];
 
   for (let row = 0; row < pegsPerRow.length; row++) {
     const pegsInRow = pegsPerRow[row];
-    
-    // Calculate the width needed for this row
-    const rowWidth = (pegsInRow - 1) * horizontalSpacing;
-    
-    // Center the row horizontally
+    const rowWidth = pegsInRow * pegSpacing;
     const startX = (SCREEN_WIDTH - rowWidth) / 2;
 
     for (let col = 0; col < pegsInRow; col++) {
-      // Calculate base position
-      let baseX = startX + col * horizontalSpacing;
-      let baseY = startY + row * verticalSpacing;
+      const offsetX = (row % 2) * (pegSpacing / 2);
       
-      // Add small random offset to each peg position for variety
-      const randomOffsetX = (Math.random() - 0.5) * 12;
-      const randomOffsetY = (Math.random() - 0.5) * 8;
+      // Calculate base position
+      let baseX = startX + col * pegSpacing + offsetX;
+      let baseY = startY + row * rowSpacing;
+      
+      // Add random offset to each peg position for variety
+      const randomOffsetX = (Math.random() - 0.5) * 15;
+      const randomOffsetY = (Math.random() - 0.5) * 10;
       
       // Apply random offset
       let finalX = baseX + randomOffsetX;
@@ -129,8 +133,7 @@ const generatePegs = (): Peg[] => {
     }
   }
 
-  console.log(`Generated ${pegs.length} pegs in ${pegsPerRow.length} rows in pyramid shape`);
-  console.log(`Pyramid structure: ${pegsPerRow.join(' → ')} pegs per row`);
+  console.log(`Generated ${pegs.length} pegs in ${pegsPerRow.length} rows with pyramid arrangement (more at bottom)`);
   console.log(`Boundary constraints: X[${minX.toFixed(1)}, ${maxX.toFixed(1)}], Y[${minY.toFixed(1)}, ${maxY.toFixed(1)}]`);
   
   return pegs;
@@ -523,7 +526,7 @@ export default function PachinkoGame() {
   }, [ballCount]);
 
   const resetGame = () => {
-    console.log('Resetting game - repositioning pegs in pyramid shape...');
+    console.log('Resetting game - repositioning pegs...');
     setBalls([]);
     setScore(0);
     setBallCount(30);
@@ -532,9 +535,9 @@ export default function PachinkoGame() {
     setScorePopups([]);
     setAutoDrop(false);
     
-    // Generate new pegs with randomized positions in pyramid shape
+    // Generate new pegs with randomized positions
     const newPegs = generatePegs();
-    console.log(`Generated ${newPegs.length} new pegs in pyramid arrangement`);
+    console.log(`Generated ${newPegs.length} new pegs with randomized positions`);
     setPegs(newPegs);
 
     if (Platform.OS !== 'web') {
