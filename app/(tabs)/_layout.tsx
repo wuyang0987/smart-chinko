@@ -2,12 +2,12 @@
 import React from 'react';
 import { Platform } from 'react-native';
 import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
-import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
+import CollapsibleMenu, { MenuItem } from '@/components/CollapsibleMenu';
 import { Stack } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 
 export default function TabLayout() {
-  const tabs: TabBarItem[] = [
+  const menuItems: MenuItem[] = [
     {
       name: '(pachinko)',
       title: 'Pachinko',
@@ -25,24 +25,11 @@ export default function TabLayout() {
   if (Platform.OS === 'ios') {
     return (
       <>
-        <NativeTabs>
-          <NativeTabs.Screen
-            name="(pachinko)"
-            options={{
-              title: 'Pachinko',
-              tabBarIcon: ({ color }) => <Icon name="gamecontroller.fill" color={color} />,
-              tabBarLabel: ({ color }) => <Label color={color}>Pachinko</Label>,
-            }}
-          />
-          <NativeTabs.Screen
-            name="profile"
-            options={{
-              title: 'Profile',
-              tabBarIcon: ({ color }) => <Icon name="person.fill" color={color} />,
-              tabBarLabel: ({ color }) => <Label color={color}>Profile</Label>,
-            }}
-          />
-        </NativeTabs>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(pachinko)" />
+          <Stack.Screen name="profile" />
+        </Stack>
+        <CollapsibleMenu items={menuItems} />
       </>
     );
   }
@@ -53,7 +40,7 @@ export default function TabLayout() {
         <Stack.Screen name="(pachinko)" />
         <Stack.Screen name="profile" />
       </Stack>
-      <FloatingTabBar tabs={tabs} />
+      <CollapsibleMenu items={menuItems} />
     </>
   );
 }
