@@ -837,6 +837,11 @@ export default function PachinkoGame() {
           </Animated.View>
         </View>
       </GestureDetector>
+
+      {/* Bottom hint text */}
+      <View style={styles.bottomHintContainer}>
+        <Text style={styles.bottomHintText}>↔️ Drag & Rotate Score Zone ↔️</Text>
+      </View>
     </View>
   );
 }
@@ -1110,5 +1115,25 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
+  },
+  bottomHintContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderTopWidth: 2,
+    borderTopColor: '#FFD700',
+    zIndex: 200,
+  },
+  bottomHintText: {
+    fontSize: 13,
+    color: '#FFD700',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
 });
