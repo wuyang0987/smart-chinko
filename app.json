@@ -1,15 +1,15 @@
 
 {
   "expo": {
-    "name": "Pachinko Pusher",
-    "slug": "Natively",
+    "name": "smart-chinko",
+    "slug": "smart-chinko",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/pachinko-icon.png",
+    "icon": "./assets/images/704e4e00-b0e6-4075-b5d5-ac45f54269a5.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/pachinko-icon.png",
+      "image": "./assets/images/704e4e00-b0e6-4075-b5d5-ac45f54269a5.png",
       "resizeMode": "contain",
       "backgroundColor": "#1a1a2e"
     },
@@ -22,14 +22,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/pachinko-icon.png",
+        "foregroundImage": "./assets/images/704e4e00-b0e6-4075-b5d5-ac45f54269a5.png",
         "backgroundColor": "#1a1a2e"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Natively"
+      "package": "com.smartchinko.smartchinko"
     },
     "web": {
-      "favicon": "./assets/images/pachinko-icon.png",
+      "favicon": "./assets/images/704e4e00-b0e6-4075-b5d5-ac45f54269a5.png",
       "bundler": "metro"
     },
     "plugins": [
