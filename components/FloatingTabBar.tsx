@@ -74,15 +74,15 @@ export default function FloatingTabBar({
       >
         {/* Background blur layer */}
         <BlurView
-          intensity={60}
+          intensity={80}
           tint={theme.dark ? 'dark' : 'light'}
           style={[
             StyleSheet.absoluteFill,
             {
               borderRadius: borderRadius,
               backgroundColor: theme.dark 
-                ? 'rgba(0, 0, 0, 0.5)' 
-                : 'rgba(255, 255, 255, 0.5)',
+                ? 'rgba(0, 0, 0, 0.7)' 
+                : 'rgba(255, 255, 255, 0.85)',
               borderWidth: 1,
               borderColor: colors.accent,
             },
@@ -124,6 +124,10 @@ function TabButton({ tab, active, onPress }: TabButtonProps) {
     };
   });
 
+  // Use high contrast colors for better visibility
+  const activeColor = colors.primary;
+  const inactiveColor = colors.text; // Changed from textSecondary to text for better contrast
+
   return (
     <TouchableOpacity
       style={styles.tab}
@@ -134,14 +138,14 @@ function TabButton({ tab, active, onPress }: TabButtonProps) {
         <IconSymbol
           name={tab.icon as any}
           size={24}
-          color={active ? colors.primary : colors.textSecondary}
+          color={active ? activeColor : inactiveColor}
         />
         <Text
           style={[
             styles.tabLabel,
             {
-              color: active ? colors.primary : colors.textSecondary,
-              fontWeight: active ? '600' : '400',
+              color: active ? activeColor : inactiveColor,
+              fontWeight: active ? '700' : '500',
             },
           ]}
         >
