@@ -17,7 +17,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  interpolate,
 } from 'react-native-reanimated';
 import { colors } from '@/styles/commonStyles';
 
@@ -78,46 +77,63 @@ export default function FloatingTabBar({
           },
         ]}
       >
-        {tabs.map((tab, index) => {
+        {tabs.map((tab) => {
           const active = isActive(tab.route);
-          const scale = useSharedValue(active ? 1 : 0.9);
-
-          const animatedStyle = useAnimatedStyle(() => {
-            return {
-              transform: [{ scale: withSpring(scale.value) }],
-            };
-          });
-
+          
           return (
-            <TouchableOpacity
+            <TabButton
               key={tab.name}
-              style={styles.tab}
+              tab={tab}
+              active={active}
               onPress={() => handleTabPress(tab.route)}
-              activeOpacity={0.7}
-            >
-              <Animated.View style={[styles.tabContent, animatedStyle]}>
-                <IconSymbol
-                  name={tab.icon as any}
-                  size={24}
-                  color={active ? colors.primary : colors.textSecondary}
-                />
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    {
-                      color: active ? colors.primary : colors.textSecondary,
-                      fontWeight: active ? '600' : '400',
-                    },
-                  ]}
-                >
-                  {tab.title}
-                </Text>
-              </Animated.View>
-            </TouchableOpacity>
+            />
           );
         })}
       </BlurView>
     </SafeAreaView>
+  );
+}
+
+interface TabButtonProps {
+  tab: TabBarItem;
+  active: boolean;
+  onPress: () => void;
+}
+
+function TabButton({ tab, active, onPress }: TabButtonProps) {
+  const scale = useSharedValue(active ? 1 : 0.9);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: withSpring(scale.value) }],
+    };
+  });
+
+  return (
+    <TouchableOpacity
+      style={styles.tab}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <Animated.View style={[styles.tabContent, animatedStyle]}>
+        <IconSymbol
+          name={tab.icon as any}
+          size={24}
+          color={active ? colors.primary : colors.textSecondary}
+        />
+        <Text
+          style={[
+            styles.tabLabel,
+            {
+              color: active ? colors.primary : colors.textSecondary,
+              fontWeight: active ? '600' : '400',
+            },
+          ]}
+        >
+          {tab.title}
+        </Text>
+      </Animated.View>
+    </TouchableOpacity>
   );
 }
 

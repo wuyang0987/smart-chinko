@@ -60,7 +60,7 @@ export default function CoinPusher() {
       -1,
       false
     );
-  }, []);
+  }, [pusherProgress]);
 
   const pusherAnimatedStyle = useAnimatedStyle(() => {
     const translateY = pusherProgress.value * 60;
@@ -197,7 +197,7 @@ export default function CoinPusher() {
         clearInterval(gameLoopRef.current);
       }
     };
-  }, []);
+  }, [pusherProgress.value]);
 
   const dropCoin = () => {
     if (coinCount <= 0) {
