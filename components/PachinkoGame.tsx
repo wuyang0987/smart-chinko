@@ -76,18 +76,24 @@ interface ScorePopup {
   color: string;
 }
 
-// Generate exactly 28 pegs in an improved pattern with randomization
+// Generate 28 pegs with more pegs at the bottom than at the top (pyramid arrangement)
 const generatePegs = (): Peg[] => {
   const pegs: Peg[] = [];
-  const rows = 7; // 7 rows to distribute 28 pegs
   const startY = 80;
-  const rowSpacing = (PLAY_AREA_HEIGHT - 220) / rows;
+  const rowSpacing = (PLAY_AREA_HEIGHT - 220) / 6;
   const pegSpacing = 70;
 
-  // Distribution: 4 pegs per row for 7 rows = 28 pegs
-  const pegsPerRow = [4, 4, 4, 4, 4, 4, 4];
+  // Distribution: fewer pegs at top, more at bottom
+  // Row 0: 2 pegs
+  // Row 1: 3 pegs
+  // Row 2: 4 pegs
+  // Row 3: 5 pegs
+  // Row 4: 6 pegs
+  // Row 5: 8 pegs
+  // Total: 2 + 3 + 4 + 5 + 6 + 8 = 28 pegs
+  const pegsPerRow = [2, 3, 4, 5, 6, 8];
 
-  for (let row = 0; row < rows; row++) {
+  for (let row = 0; row < pegsPerRow.length; row++) {
     const pegsInRow = pegsPerRow[row];
     const rowWidth = pegsInRow * pegSpacing;
     const startX = (SCREEN_WIDTH - rowWidth) / 2;
@@ -107,7 +113,7 @@ const generatePegs = (): Peg[] => {
     }
   }
 
-  console.log(`Generated ${pegs.length} pegs in ${rows} rows`);
+  console.log(`Generated ${pegs.length} pegs in ${pegsPerRow.length} rows with pyramid arrangement (more at bottom)`);
   return pegs;
 };
 
