@@ -449,7 +449,12 @@ export default function PachinkoGame() {
       return;
     }
 
-    const dropX = SCREEN_WIDTH / 2 + (Math.random() - 0.5) * 80;
+    // Generate a random horizontal position across the entire screen width
+    // Keep a margin of BALL_SIZE on each side to prevent spawning too close to walls
+    const margin = BALL_SIZE;
+    const dropX = margin + Math.random() * (SCREEN_WIDTH - 2 * margin);
+    
+    console.log(`Ball dropped at x: ${dropX.toFixed(2)} (screen width: ${SCREEN_WIDTH})`);
     
     // Determine ball type (10% golden, 5% rainbow)
     const rand = Math.random();
