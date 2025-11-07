@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "smart-chinko",
-    "slug": "smart-chinko",
+    "name": "Smart Chinko",
+    "slug": "Smart Chinko",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/704e4e00-b0e6-4075-b5d5-ac45f54269a5.png",
@@ -43,5 +43,6 @@
     "extra": {
       "router": {}
     }
-  }
+  },
+  "scheme": "Smart Chinko"
 }

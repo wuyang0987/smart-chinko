@@ -25,9 +25,12 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BALL_SIZE = 22;
 const PEG_SIZE = 14;
 const PEG_RADIUS = PEG_SIZE / 2;
-const DROP_ZONE_HEIGHT = 140;
 const TOP_SPACE = 60;
-const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TOP_SPACE;
+const HEADER_HEIGHT = 80;
+const DROP_ZONE_HEIGHT = 140;
+const SCORE_ZONE_HEIGHT = 70;
+const TAB_BAR_HEIGHT = 80; // Approximate tab bar height
+const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - TOP_SPACE - HEADER_HEIGHT - DROP_ZONE_HEIGHT - SCORE_ZONE_HEIGHT - TAB_BAR_HEIGHT;
 const GRAVITY = 0.6;
 const FRICTION = 0.985;
 const BOUNCE_DAMPING = 0.75;
@@ -82,15 +85,15 @@ interface ScorePopup {
 // with staggered positioning between rows
 const generatePegs = (): Peg[] => {
   const pegs: Peg[] = [];
-  const startY = 80;
-  const rowSpacing = (PLAY_AREA_HEIGHT - 220) / 6;
+  const startY = 40;
+  const rowSpacing = (PLAY_AREA_HEIGHT - 80) / 6;
   const pegSpacing = 70;
 
   // Define boundaries with proper margins
   const minX = PEG_RADIUS + 5; // Left boundary with small margin
   const maxX = SCREEN_WIDTH - PEG_RADIUS - 5; // Right boundary with small margin
   const minY = PEG_RADIUS + 5; // Top boundary with small margin
-  const maxY = PLAY_AREA_HEIGHT - 100; // Bottom boundary (above score zones)
+  const maxY = PLAY_AREA_HEIGHT - 40; // Bottom boundary (above score zones)
 
   // Distribution: fewer pegs at top, more at bottom
   // Row 0: 2 pegs
@@ -138,7 +141,7 @@ const generatePegs = (): Peg[] => {
   }
 
   console.log(`Generated ${pegs.length} pegs in ${pegsPerRow.length} rows with staggered pyramid arrangement`);
-  console.log(`Stagger pattern: Even rows aligned, odd rows offset by ${pegSpacing / 2}px`);
+  console.log(`Play area height: ${PLAY_AREA_HEIGHT}px`);
   console.log(`Boundary constraints: X[${minX.toFixed(1)}, ${maxX.toFixed(1)}], Y[${minY.toFixed(1)}, ${maxY.toFixed(1)}]`);
   
   return pegs;
@@ -311,7 +314,7 @@ export default function PachinkoGame() {
           }
 
           // Ground collision - check which score zone
-          const groundLevel = PLAY_AREA_HEIGHT - BALL_SIZE / 2 - 70;
+          const groundLevel = PLAY_AREA_HEIGHT - BALL_SIZE / 2 - 20;
           if (newY >= groundLevel) {
             newY = groundLevel;
             newVelocityY = -newVelocityY * 0.3;
@@ -738,24 +741,24 @@ export default function PachinkoGame() {
             </Text>
           </Animated.View>
         ))}
+      </View>
 
-        {/* Score Zones at the bottom */}
-        <View style={styles.scoreZonesContainer}>
-          {scoreZones.map((zone, index) => (
-            <View
-              key={`zone-${index}`}
-              style={[
-                styles.scoreZone,
-                {
-                  width: zone.width,
-                  backgroundColor: zone.color,
-                },
-              ]}
-            >
-              <Text style={styles.scoreZoneText}>{zone.label}</Text>
-            </View>
-          ))}
-        </View>
+      {/* Score Zones at the bottom - now outside play area */}
+      <View style={styles.scoreZonesContainer}>
+        {scoreZones.map((zone, index) => (
+          <View
+            key={`zone-${index}`}
+            style={[
+              styles.scoreZone,
+              {
+                width: zone.width,
+                backgroundColor: zone.color,
+              },
+            ]}
+          >
+            <Text style={styles.scoreZoneText}>{zone.label}</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -776,6 +779,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   header: {
+    height: HEADER_HEIGHT,
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 15,
@@ -799,7 +803,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   statValue: {
-    fontSize: 32,
+    fontSize: 28,
     color: '#FFD700',
     fontWeight: 'bold',
     marginTop: 2,
@@ -812,7 +816,7 @@ const styles = StyleSheet.create({
   },
   comboContainer: {
     position: 'absolute',
-    top: TOP_SPACE + 95,
+    top: TOP_SPACE + HEADER_HEIGHT + 10,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -989,13 +993,12 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   scoreZonesContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 70,
+    height: SCORE_ZONE_HEIGHT,
     flexDirection: 'row',
     zIndex: 30,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
+    borderColor: '#FFD700',
   },
   scoreZone: {
     height: '100%',
