@@ -107,18 +107,14 @@ export default function CollapsibleMenu({ items }: CollapsibleMenuProps) {
           onPress={toggleMenu}
           activeOpacity={0.8}
         >
-          <BlurView
-            intensity={80}
-            tint={theme.dark ? 'dark' : 'light'}
+          <View
             style={[
               StyleSheet.absoluteFill,
               {
                 borderRadius: 30,
-                backgroundColor: theme.dark
-                  ? 'rgba(0, 0, 0, 0.7)'
-                  : 'rgba(255, 255, 255, 0.85)',
+                backgroundColor: '#FFFACD',
                 borderWidth: 2,
-                borderColor: colors.accent,
+                borderColor: '#F0E68C',
               },
             ]}
           />
@@ -126,25 +122,21 @@ export default function CollapsibleMenu({ items }: CollapsibleMenuProps) {
             <IconSymbol
               name={isExpanded ? 'xmark' : 'line.3.horizontal'}
               size={28}
-              color={colors.primary}
+              color="#8B7500"
             />
           </Animated.View>
         </TouchableOpacity>
 
         {/* Collapsible Menu */}
         <Animated.View style={[styles.menuContainer, animatedMenuStyle]}>
-          <BlurView
-            intensity={80}
-            tint={theme.dark ? 'dark' : 'light'}
+          <View
             style={[
               StyleSheet.absoluteFill,
               {
                 borderRadius: 20,
-                backgroundColor: theme.dark
-                  ? 'rgba(0, 0, 0, 0.7)'
-                  : 'rgba(255, 255, 255, 0.85)',
+                backgroundColor: '#FFFACD',
                 borderWidth: 2,
-                borderColor: colors.accent,
+                borderColor: '#F0E68C',
               },
             ]}
           />
@@ -164,13 +156,13 @@ export default function CollapsibleMenu({ items }: CollapsibleMenuProps) {
                   <IconSymbol
                     name={item.icon as any}
                     size={24}
-                    color={active ? colors.primary : colors.text}
+                    color={active ? '#B8860B' : '#8B7500'}
                   />
                   <Text
                     style={[
                       styles.menuItemText,
                       {
-                        color: active ? colors.primary : colors.text,
+                        color: active ? '#B8860B' : '#8B7500',
                         fontWeight: active ? '700' : '500',
                       },
                     ]}
@@ -200,7 +192,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'flex-start',
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 30,
     pointerEvents: 'box-none',
   },
   hamburgerButton: {
@@ -235,14 +227,14 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128, 128, 128, 0.2)',
+    borderBottomColor: 'rgba(240, 230, 140, 0.4)',
     gap: 12,
   },
   menuItemLast: {
     borderBottomWidth: 0,
   },
   menuItemActive: {
-    backgroundColor: 'rgba(100, 200, 255, 0.1)',
+    backgroundColor: 'rgba(240, 230, 140, 0.3)',
     borderRadius: 12,
   },
   menuItemText: {
@@ -253,6 +245,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.primary,
+    backgroundColor: '#B8860B',
   },
 });
