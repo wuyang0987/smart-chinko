@@ -38,7 +38,7 @@ export default function FloatingTabBar({
   tabs,
   containerWidth = Dimensions.get('window').width - 40,
   borderRadius = 25,
-  bottomMargin = 30, // Increased from 20 to 30 to move it down
+  bottomMargin = 50, // Increased from 30 to 50 to move it further down
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
