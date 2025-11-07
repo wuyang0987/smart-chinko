@@ -838,7 +838,7 @@ export default function PachinkoGame() {
         </View>
       </GestureDetector>
 
-      {/* Bottom hint text */}
+      {/* Bottom hint text - moved down to avoid overlap */}
       <View style={styles.bottomHintContainer}>
         <Text style={styles.bottomHintText}>↔️ Drag & Rotate Score Zone ↔️</Text>
       </View>
@@ -1118,7 +1118,7 @@ const styles = StyleSheet.create({
   },
   bottomHintContainer: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 15,
     left: 0,
     right: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
