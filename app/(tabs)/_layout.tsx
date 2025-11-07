@@ -11,7 +11,7 @@ export default function TabLayout() {
     {
       name: '(pachinko)',
       title: 'Pachinko',
-      icon: 'circle.circle.fill',
+      icon: 'gamecontroller.fill',
       route: '/(tabs)/(pachinko)',
     },
     {
@@ -30,7 +30,7 @@ export default function TabLayout() {
             name="(pachinko)"
             options={{
               title: 'Pachinko',
-              tabBarIcon: ({ color }) => <Icon name="circle.circle.fill" color={color} />,
+              tabBarIcon: ({ color }) => <Icon name="gamecontroller.fill" color={color} />,
               tabBarLabel: ({ color }) => <Label color={color}>Pachinko</Label>,
             }}
           />
