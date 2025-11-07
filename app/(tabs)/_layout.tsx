@@ -9,12 +9,6 @@ import { colors } from '@/styles/commonStyles';
 export default function TabLayout() {
   const tabs: TabBarItem[] = [
     {
-      name: '(home)',
-      title: 'Coin Pusher',
-      icon: 'dollarsign.circle.fill',
-      route: '/(tabs)/(home)',
-    },
-    {
       name: '(pachinko)',
       title: 'Pachinko',
       icon: 'circle.circle.fill',
@@ -32,14 +26,6 @@ export default function TabLayout() {
     return (
       <>
         <NativeTabs>
-          <NativeTabs.Screen
-            name="(home)"
-            options={{
-              title: 'Coin Pusher',
-              tabBarIcon: ({ color }) => <Icon name="dollarsign.circle.fill" color={color} />,
-              tabBarLabel: ({ color }) => <Label color={color}>Coin Pusher</Label>,
-            }}
-          />
           <NativeTabs.Screen
             name="(pachinko)"
             options={{
@@ -64,7 +50,6 @@ export default function TabLayout() {
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(home)" />
         <Stack.Screen name="(pachinko)" />
         <Stack.Screen name="profile" />
       </Stack>
