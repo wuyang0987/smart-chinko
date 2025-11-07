@@ -31,14 +31,14 @@ interface FloatingTabBarProps {
   tabs: TabBarItem[];
   containerWidth?: number;
   borderRadius?: number;
-  topMargin?: number;
+  bottomMargin?: number;
 }
 
 export default function FloatingTabBar({
   tabs,
   containerWidth = Dimensions.get('window').width - 40,
   borderRadius = 25,
-  topMargin = 60,
+  bottomMargin = 20,
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -55,11 +55,11 @@ export default function FloatingTabBar({
 
   return (
     <SafeAreaView
-      edges={['top']}
+      edges={['bottom']}
       style={[
         styles.safeArea,
         {
-          top: topMargin,
+          bottom: bottomMargin,
         },
       ]}
     >

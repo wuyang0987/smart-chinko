@@ -24,7 +24,8 @@ const COIN_SIZE = 35;
 const PUSHER_HEIGHT = 50;
 const PUSHER_WIDTH = SCREEN_WIDTH * 0.85;
 const DROP_ZONE_HEIGHT = 140;
-const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - 250;
+const TAB_BAR_HEIGHT = 90; // Height reserved for the floating tab bar at bottom
+const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TAB_BAR_HEIGHT - 100;
 const GRAVITY = 0.6;
 const FRICTION = 0.985;
 const BOUNCE_DAMPING = 0.6;
@@ -317,20 +318,10 @@ export default function CoinPusher() {
         <View style={styles.ground} />
       </View>
 
-      {/* Collection Zone */}
+      {/* Collection Zone - This is where coins drop and the tab bar should be */}
       <View style={styles.collectionZone}>
-        <Text style={styles.collectionText}>💎 Collection Zone 💎</Text>
-        <Text style={styles.collectionSubtext}>Coins that fall here count!</Text>
-      </View>
-
-      {/* Controls */}
-      <View style={styles.controls}>
-        <Pressable 
-          style={styles.resetButton} 
-          onPress={resetGame}
-        >
-          <Text style={styles.resetButtonText}>🔄 RESET GAME</Text>
-        </Pressable>
+        <Text style={styles.collectionText}>💎 Tab Bar Below 💎</Text>
+        <Text style={styles.collectionSubtext}>Coins land on the floating tab bar!</Text>
       </View>
     </View>
   );
@@ -487,7 +478,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   collectionZone: {
-    height: 90,
+    height: 60,
     backgroundColor: colors.highlight,
     justifyContent: 'center',
     alignItems: 'center',
@@ -498,36 +489,14 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   collectionText: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   collectionSubtext: {
-    fontSize: 13,
+    fontSize: 11,
     color: colors.textSecondary,
     fontStyle: 'italic',
-  },
-  controls: {
-    padding: 15,
-    backgroundColor: colors.card,
-    borderTopWidth: 2,
-    borderTopColor: colors.accent,
-  },
-  resetButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.15)',
-    elevation: 3,
-    borderWidth: 2,
-    borderColor: colors.textSecondary,
-  },
-  resetButtonText: {
-    color: colors.card,
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
   },
 });
