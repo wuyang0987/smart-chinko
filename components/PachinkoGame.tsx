@@ -14,7 +14,6 @@ import Animated, {
   withSpring,
   withSequence,
   withTiming,
-  withRepeat,
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -147,14 +146,51 @@ export default function PachinkoGame() {
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
   const autoDropRef = useRef<NodeJS.Timeout | null>(null);
   const comboTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pegsRef = useRef<Peg[]>(pegs);
+
+  // Keep pegs ref in sync
+  useEffect(() => {
+    pegsRef.current = pegs;
+  }, [pegs]);
 
   // Animated values for UI effects
   const scoreScale = useSharedValue(1);
   const comboOpacity = useSharedValue(0);
 
+  const createParticles = useCallback((x: number, y: number, color: string, count: number = 5) => {
+    const newParticles: Particle[] = [];
+    for (let i = 0; i < count; i++) {
+      newParticles.push({
+        id: `${Date.now()}-${Math.random()}`,
+        x,
+        y,
+        velocityX: (Math.random() - 0.5) * 4,
+        velocityY: (Math.random() - 0.5) * 4 - 2,
+        life: 20 + Math.random() * 20,
+        color,
+      });
+    }
+    setParticles((prev) => [...prev, ...newParticles]);
+  }, []);
+
+  const createScorePopup = useCallback((x: number, y: number, score: number, color: string) => {
+    setScorePopups((prev) => [
+      ...prev,
+      {
+        id: `${Date.now()}`,
+        x,
+        y,
+        score,
+        color,
+      },
+    ]);
+  }, []);
+
   // Main physics simulation loop
   useEffect(() => {
     gameLoopRef.current = setInterval(() => {
+      const hitPegs: number[] = [];
+
       // Update balls
       setBalls((prevBalls) => {
         if (prevBalls.length === 0) return prevBalls;
@@ -172,54 +208,66 @@ export default function PachinkoGame() {
           if (newX < BALL_SIZE / 2) {
             newX = BALL_SIZE / 2;
             newVelocityX = -newVelocityX * BOUNCE_DAMPING;
-            createParticles(newX, newY, ball.color);
+            createParticles(newX, newY, ball.color, 3);
           } else if (newX > SCREEN_WIDTH - BALL_SIZE / 2) {
             newX = SCREEN_WIDTH - BALL_SIZE / 2;
             newVelocityX = -newVelocityX * BOUNCE_DAMPING;
-            createParticles(newX, newY, ball.color);
+            createParticles(newX, newY, ball.color, 3);
           }
 
-          // Peg collision detection
-          setPegs((prevPegs) => {
-            return prevPegs.map((peg) => {
-              const dx = newX - peg.x;
-              const dy = newY - peg.y;
-              const distance = Math.sqrt(dx * dx + dy * dy);
-              const minDistance = (BALL_SIZE + PEG_SIZE) / 2;
+          // Peg collision detection - FIXED PHYSICS
+          const currentPegs = pegsRef.current;
+          for (let i = 0; i < currentPegs.length; i++) {
+            const peg = currentPegs[i];
+            const dx = newX - peg.x;
+            const dy = newY - peg.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const minDistance = (BALL_SIZE + PEG_SIZE) / 2;
 
-              if (distance < minDistance) {
-                // Calculate bounce angle
-                const angle = Math.atan2(dy, dx);
-                const targetX = peg.x + Math.cos(angle) * minDistance;
-                const targetY = peg.y + Math.sin(angle) * minDistance;
+            if (distance < minDistance && distance > 0) {
+              // Normalize the collision vector
+              const normalX = dx / distance;
+              const normalY = dy / distance;
 
-                newX = targetX;
-                newY = targetY;
+              // Push ball out of peg
+              const overlap = minDistance - distance;
+              newX += normalX * overlap;
+              newY += normalY * overlap;
 
-                // Apply bounce velocity
-                const bounceStrength = Math.sqrt(
-                  newVelocityX * newVelocityX + newVelocityY * newVelocityY
-                ) * PEG_BOUNCE;
+              // Calculate relative velocity
+              const relativeVelocityX = newVelocityX;
+              const relativeVelocityY = newVelocityY;
 
-                newVelocityX = Math.cos(angle) * bounceStrength;
-                newVelocityY = Math.sin(angle) * bounceStrength;
+              // Calculate velocity along collision normal
+              const velocityAlongNormal = relativeVelocityX * normalX + relativeVelocityY * normalY;
 
-                // Add randomness
-                newVelocityX += (Math.random() - 0.5) * 2;
+              // Only resolve if objects are moving towards each other
+              if (velocityAlongNormal < 0) {
+                // Calculate impulse scalar with bounce factor
+                const restitution = PEG_BOUNCE;
+                const impulse = -(1 + restitution) * velocityAlongNormal;
+
+                // Apply impulse to ball velocity
+                newVelocityX += impulse * normalX;
+                newVelocityY += impulse * normalY;
+
+                // Add some randomness for more interesting gameplay
+                newVelocityX += (Math.random() - 0.5) * 1.5;
+                newVelocityY += (Math.random() - 0.5) * 0.5;
 
                 // Create particles on hit
-                createParticles(peg.x, peg.y, ball.color);
+                createParticles(peg.x, peg.y, ball.color, 6);
 
+                // Mark peg as hit
+                hitPegs.push(i);
+
+                // Haptic feedback
                 if (Platform.OS !== 'web') {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }
-
-                // Mark peg as hit
-                return { ...peg, hit: true, hitTime: Date.now() };
               }
-              return peg;
-            });
-          });
+            }
+          }
 
           // Ground collision - check which score zone
           const groundLevel = PLAY_AREA_HEIGHT - BALL_SIZE / 2 - 70;
@@ -321,6 +369,18 @@ export default function PachinkoGame() {
         return updatedBalls.filter((ball) => !ball.collected);
       });
 
+      // Update hit pegs
+      if (hitPegs.length > 0) {
+        setPegs((prevPegs) => {
+          return prevPegs.map((peg, index) => {
+            if (hitPegs.includes(index)) {
+              return { ...peg, hit: true, hitTime: Date.now() };
+            }
+            return peg;
+          });
+        });
+      }
+
       // Update particles
       setParticles((prevParticles) => {
         return prevParticles
@@ -361,7 +421,7 @@ export default function PachinkoGame() {
         clearInterval(gameLoopRef.current);
       }
     };
-  }, [scoreZones, lastScoreTime]);
+  }, [scoreZones, lastScoreTime, createParticles, createScorePopup]);
 
   // Auto-drop functionality
   useEffect(() => {
@@ -381,35 +441,6 @@ export default function PachinkoGame() {
       }
     };
   }, [autoDrop, ballCount]);
-
-  const createParticles = (x: number, y: number, color: string, count: number = 5) => {
-    const newParticles: Particle[] = [];
-    for (let i = 0; i < count; i++) {
-      newParticles.push({
-        id: `${Date.now()}-${Math.random()}`,
-        x,
-        y,
-        velocityX: (Math.random() - 0.5) * 4,
-        velocityY: (Math.random() - 0.5) * 4 - 2,
-        life: 20 + Math.random() * 20,
-        color,
-      });
-    }
-    setParticles((prev) => [...prev, ...newParticles]);
-  };
-
-  const createScorePopup = (x: number, y: number, score: number, color: string) => {
-    setScorePopups((prev) => [
-      ...prev,
-      {
-        id: `${Date.now()}`,
-        x,
-        y,
-        score,
-        color,
-      },
-    ]);
-  };
 
   const dropBall = useCallback(() => {
     if (ballCount <= 0) {
