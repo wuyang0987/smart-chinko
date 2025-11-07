@@ -64,7 +64,7 @@ export default function FloatingTabBar({
       ]}
     >
       <BlurView
-        intensity={80}
+        intensity={60}
         tint={theme.dark ? 'dark' : 'light'}
         style={[
           styles.container,
@@ -143,14 +143,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 1000,
+    zIndex: 100,
   },
   container: {
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
-    elevation: 8,
+    boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.08)',
+    elevation: 3,
   },
   tab: {
     flex: 1,
