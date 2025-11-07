@@ -63,33 +63,48 @@ export default function FloatingTabBar({
         },
       ]}
     >
-      <BlurView
-        intensity={60}
-        tint={theme.dark ? 'dark' : 'light'}
+      <View
         style={[
-          styles.container,
+          styles.wrapper,
           {
             width: containerWidth,
             borderRadius: borderRadius,
-            backgroundColor: colors.card,
-            borderWidth: 1,
-            borderColor: colors.accent,
           },
         ]}
       >
-        {tabs.map((tab) => {
-          const active = isActive(tab.route);
-          
-          return (
-            <TabButton
-              key={tab.name}
-              tab={tab}
-              active={active}
-              onPress={() => handleTabPress(tab.route)}
-            />
-          );
-        })}
-      </BlurView>
+        {/* Background blur layer */}
+        <BlurView
+          intensity={60}
+          tint={theme.dark ? 'dark' : 'light'}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius: borderRadius,
+              backgroundColor: theme.dark 
+                ? 'rgba(0, 0, 0, 0.5)' 
+                : 'rgba(255, 255, 255, 0.5)',
+              borderWidth: 1,
+              borderColor: colors.accent,
+            },
+          ]}
+        />
+        
+        {/* Content layer - rendered on top of blur */}
+        <View style={styles.container}>
+          {tabs.map((tab) => {
+            const active = isActive(tab.route);
+            
+            return (
+              <TabButton
+                key={tab.name}
+                tab={tab}
+                active={active}
+                onPress={() => handleTabPress(tab.route)}
+              />
+            );
+          })}
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -146,12 +161,15 @@ const styles = StyleSheet.create({
     zIndex: 100,
     pointerEvents: 'box-none',
   },
+  wrapper: {
+    overflow: 'hidden',
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+    elevation: 8,
+  },
   container: {
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
-    elevation: 8,
     pointerEvents: 'auto',
   },
   tab: {
