@@ -79,13 +79,13 @@ interface ScorePopup {
 // Generate pegs in an improved pattern with fewer pegs and randomization
 const generatePegs = (): Peg[] => {
   const pegs: Peg[] = [];
-  const rows = 8; // Reduced from 14 to 8
-  const startY = 60;
+  const rows = 5; // Reduced from 8 to 5
+  const startY = 80;
   const rowSpacing = (PLAY_AREA_HEIGHT - 220) / rows;
-  const pegSpacing = 55; // Increased spacing from 42 to 55
+  const pegSpacing = 70; // Increased spacing from 55 to 70
 
   for (let row = 0; row < rows; row++) {
-    const pegsInRow = 5 + Math.floor(row / 3); // Reduced from 7 + Math.floor(row / 2)
+    const pegsInRow = 3 + Math.floor(row / 2); // Reduced from 5 + Math.floor(row / 3) to 3 + Math.floor(row / 2)
     const rowWidth = pegsInRow * pegSpacing;
     const startX = (SCREEN_WIDTH - rowWidth) / 2;
 
@@ -104,6 +104,7 @@ const generatePegs = (): Peg[] => {
     }
   }
 
+  console.log(`Generated ${pegs.length} pegs in ${rows} rows`);
   return pegs;
 };
 
