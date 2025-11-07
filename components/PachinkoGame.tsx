@@ -23,6 +23,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BALL_SIZE = 22;
 const PEG_SIZE = 14;
+const PEG_RADIUS = PEG_SIZE / 2;
 const DROP_ZONE_HEIGHT = 140;
 const TAB_BAR_SPACE = 160; // Increased from 130 to 160 to prevent overlap with bottom menu
 const PLAY_AREA_HEIGHT = SCREEN_HEIGHT - DROP_ZONE_HEIGHT - TAB_BAR_SPACE - 60;
@@ -83,6 +84,12 @@ const generatePegs = (): Peg[] => {
   const rowSpacing = (PLAY_AREA_HEIGHT - 220) / 6;
   const pegSpacing = 70;
 
+  // Define boundaries with proper margins
+  const minX = PEG_RADIUS + 5; // Left boundary with small margin
+  const maxX = SCREEN_WIDTH - PEG_RADIUS - 5; // Right boundary with small margin
+  const minY = PEG_RADIUS + 5; // Top boundary with small margin
+  const maxY = PLAY_AREA_HEIGHT - 100; // Bottom boundary (above score zones)
+
   // Distribution: fewer pegs at top, more at bottom
   // Row 0: 2 pegs
   // Row 1: 3 pegs
@@ -100,13 +107,26 @@ const generatePegs = (): Peg[] => {
 
     for (let col = 0; col < pegsInRow; col++) {
       const offsetX = (row % 2) * (pegSpacing / 2);
+      
+      // Calculate base position
+      let baseX = startX + col * pegSpacing + offsetX;
+      let baseY = startY + row * rowSpacing;
+      
       // Add random offset to each peg position for variety
       const randomOffsetX = (Math.random() - 0.5) * 15;
       const randomOffsetY = (Math.random() - 0.5) * 10;
       
+      // Apply random offset
+      let finalX = baseX + randomOffsetX;
+      let finalY = baseY + randomOffsetY;
+      
+      // Clamp positions to boundaries to ensure pegs stay within play area
+      finalX = Math.max(minX, Math.min(maxX, finalX));
+      finalY = Math.max(minY, Math.min(maxY, finalY));
+      
       pegs.push({
-        x: startX + col * pegSpacing + offsetX + randomOffsetX,
-        y: startY + row * rowSpacing + randomOffsetY,
+        x: finalX,
+        y: finalY,
         hit: false,
         hitTime: 0,
       });
@@ -114,6 +134,8 @@ const generatePegs = (): Peg[] => {
   }
 
   console.log(`Generated ${pegs.length} pegs in ${pegsPerRow.length} rows with pyramid arrangement (more at bottom)`);
+  console.log(`Boundary constraints: X[${minX.toFixed(1)}, ${maxX.toFixed(1)}], Y[${minY.toFixed(1)}, ${maxY.toFixed(1)}]`);
+  
   return pegs;
 };
 
