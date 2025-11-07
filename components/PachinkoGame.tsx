@@ -698,7 +698,7 @@ export default function PachinkoGame() {
           />
         ))}
 
-        {/* Balls */}
+        {/* Balls - Now using proper circular Views */}
         {balls.map((ball) => (
           <View
             key={ball.id}
@@ -707,20 +707,14 @@ export default function PachinkoGame() {
               {
                 left: ball.x - BALL_SIZE / 2,
                 top: ball.y - BALL_SIZE / 2,
+                backgroundColor: ball.color,
               },
+              ball.type === 'golden' && styles.goldenBall,
+              ball.type === 'rainbow' && styles.rainbowBall,
             ]}
           >
-            <View
-              style={[
-                styles.ballInner,
-                ball.type === 'golden' && styles.goldenBall,
-                ball.type === 'rainbow' && styles.rainbowBall,
-              ]}
-            >
-              <Text style={styles.ballEmoji}>
-                {ball.type === 'golden' ? '🟡' : ball.type === 'rainbow' ? '🌈' : '⚪'}
-              </Text>
-            </View>
+            {/* Inner highlight for 3D effect */}
+            <View style={styles.ballHighlight} />
           </View>
         ))}
 
@@ -960,26 +954,31 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: BALL_SIZE,
     height: BALL_SIZE,
+    borderRadius: BALL_SIZE / 2,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 50,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.2)',
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.3)',
+    elevation: 3,
   },
-  ballInner: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: BALL_SIZE / 2,
-    backgroundColor: 'transparent',
+  ballHighlight: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
   goldenBall: {
     boxShadow: '0px 0px 15px rgba(255, 215, 0, 0.9)',
+    elevation: 5,
   },
   rainbowBall: {
     boxShadow: '0px 0px 15px rgba(255, 0, 255, 0.9)',
-  },
-  ballEmoji: {
-    fontSize: 22,
+    elevation: 5,
   },
   scorePopup: {
     position: 'absolute',
