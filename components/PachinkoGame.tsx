@@ -76,69 +76,6 @@ interface ScorePopup {
   color: string;
 }
 
-// Jelly Button Component with reduced animation
-const JellyButton = ({ 
-  onPress, 
-  disabled, 
-  style, 
-  textStyle, 
-  children 
-}: { 
-  onPress: () => void; 
-  disabled?: boolean; 
-  style: any; 
-  textStyle: any; 
-  children: React.ReactNode;
-}) => {
-  const scale = useSharedValue(1);
-  const scaleX = useSharedValue(1);
-  const scaleY = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { scaleX: scaleX.value },
-      { scaleY: scaleY.value },
-    ],
-  }));
-
-  const handlePressIn = () => {
-    // Reduced squish effect - less compression
-    scale.value = withSpring(0.97, { damping: 15, stiffness: 400 });
-    scaleX.value = withSpring(1.02, { damping: 15, stiffness: 400 });
-    scaleY.value = withSpring(0.96, { damping: 15, stiffness: 400 });
-  };
-
-  const handlePressOut = () => {
-    // Subtle bounce back with minimal overshoot
-    scale.value = withSequence(
-      withSpring(1.03, { damping: 12, stiffness: 350 }),
-      withSpring(1, { damping: 15, stiffness: 400 })
-    );
-    scaleX.value = withSequence(
-      withSpring(0.98, { damping: 12, stiffness: 350 }),
-      withSpring(1, { damping: 15, stiffness: 400 })
-    );
-    scaleY.value = withSequence(
-      withSpring(1.03, { damping: 12, stiffness: 350 }),
-      withSpring(1, { damping: 15, stiffness: 400 })
-    );
-  };
-
-  return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={disabled}
-    >
-      <Animated.View style={[style, animatedStyle]}>
-        <Text style={textStyle}>{children}</Text>
-      </Animated.View>
-    </Pressable>
-  );
-};
-
 // Generate pegs in an improved pattern with fewer pegs
 const generatePegs = (): Peg[] => {
   const pegs: Peg[] = [];
@@ -622,19 +559,20 @@ export default function PachinkoGame() {
       {/* Drop Zone */}
       <View style={styles.dropZone}>
         <View style={styles.dropButtons}>
-          <JellyButton
+          <Pressable
             onPress={dropBall}
             disabled={ballCount <= 0}
             style={[
               styles.dropButton,
               ballCount <= 0 && styles.dropButtonDisabled,
             ]}
-            textStyle={styles.dropButtonText}
           >
-            {ballCount > 0 ? '🎯 DROP' : '❌ EMPTY'}
-          </JellyButton>
+            <Text style={styles.dropButtonText}>
+              {ballCount > 0 ? '🎯 DROP' : '❌ EMPTY'}
+            </Text>
+          </Pressable>
           
-          <JellyButton
+          <Pressable
             onPress={toggleAutoDrop}
             disabled={ballCount <= 0}
             style={[
@@ -642,19 +580,20 @@ export default function PachinkoGame() {
               autoDrop && styles.autoDropButtonActive,
               ballCount <= 0 && styles.dropButtonDisabled,
             ]}
-            textStyle={styles.autoDropButtonText}
           >
-            {autoDrop ? '⏸️ AUTO' : '▶️ AUTO'}
-          </JellyButton>
+            <Text style={styles.autoDropButtonText}>
+              {autoDrop ? '⏸️ AUTO' : '▶️ AUTO'}
+            </Text>
+          </Pressable>
 
-          <JellyButton
+          <Pressable
             onPress={resetGame}
-            disabled={false}
             style={styles.resetButton}
-            textStyle={styles.resetButtonText}
           >
-            🔄 RESET
-          </JellyButton>
+            <Text style={styles.resetButtonText}>
+              🔄 RESET
+            </Text>
+          </Pressable>
         </View>
         
         <View style={styles.legendContainer}>
