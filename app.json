@@ -33,9 +33,7 @@
       "bundler": "metro"
     },
     "plugins": [
-      [
-        "expo-font"
-      ],
+      "expo-font",
       "expo-router",
       "expo-web-browser"
     ],
